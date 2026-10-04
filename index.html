@@ -130,6 +130,15 @@ svg.path polyline{fill:none;stroke:var(--sel);stroke-opacity:.55;stroke-linecap:
 .tools button{background:var(--card);border-radius:14px;padding:10px 14px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px}
 .found{width:100%;max-width:520px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:16vh;overflow-y:auto;padding:4px}
 .chip{background:var(--card);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.chip{cursor:pointer;-webkit-touch-callout:none;touch-action:pan-y;transition:transform .12s,background .12s}
+.chip.holding{background:var(--accent);color:#fff;transform:scale(1.1)}
+#defPop{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%) translateY(24px);opacity:0;pointer-events:none;z-index:65;
+  width:min(92vw,440px);background:var(--card2);border:2px solid var(--accent);border-radius:18px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:.18s}
+#defPop.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#defPop .dw{font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:2px}
+#defPop .dp{font-size:12px;color:var(--gold);font-weight:900;letter-spacing:1px}
+#defPop .dd{font-size:15px;line-height:1.45;margin-top:6px}
+#defPop .dc{font-size:12px;color:var(--dim);margin-top:8px}
 .chip.long{background:linear-gradient(135deg,var(--gold),#ff8a3d);color:#3a1d00}
 .chip.new{animation:pop .35s}
 @keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.15)}}
@@ -303,6 +312,7 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
 <div class="overlay" id="overlay"></div>
 <div class="modal" id="modal"><div class="card" id="modalCard"></div></div>
 <div class="toast" id="toast"></div>
+<div id="defPop"></div>
 
 <script src="words.js"></script>
 <script>
@@ -724,6 +734,7 @@ function submit(){
   const c=document.createElement('span');c.className='chip new'+(w.length>=6?' long':'');c.textContent=w;$('#found').prepend(c);
   updateHud();clearSoon();
   // rewards that trigger mid-round
+  if(!ST.holdTip){ST.holdTip=1;saveAll();setTimeout(()=>queueToast('💡 Press &amp; <b>hold</b> a word below to see what it means. The clock stops while you hold.'),900)}
   award('first');if(w.length>=7)award('seven');if(w.length>=8)award('eight');if(w.includes('qu'))award('qu');
   if(G.combo>=5)award('combo5');if(G.combo>=10)award('combo10');
   if(G.time&&G.left<=3)award('buzzer');if(now-G.rotAt<5000)award('angle');
@@ -732,6 +743,24 @@ function submit(){
   if(G.found.size===G.sol.size){callout('🏆 CLEARED!');setTimeout(endGame,1000)}
 }
 
+/* ---------- press & hold a found word: its meaning pops up and the clock stops while you hold ---------- */
+let holdT=null,holding=null;
+$('#found').addEventListener('pointerdown',e=>{const c=e.target.closest('.chip');if(!c||!G||G.over||!G.ready)return;
+  clearTimeout(holdT);holdT=setTimeout(()=>startHold(c),350)});
+['pointerup','pointercancel'].forEach(ev=>addEventListener(ev,()=>{clearTimeout(holdT);endHold()}));
+$('#found').addEventListener('contextmenu',e=>e.preventDefault());
+$('#found').addEventListener('click',e=>{if(e.target.closest('.chip')&&!holding)toast('Press &amp; <b>hold</b> a word to see what it means — the clock stops while you hold')});
+async function startHold(c){
+  if(!G||G.over||holding)return;const w=c.textContent.toLowerCase(),pts=points(w,G.n);
+  holding={c,wasPaused:G.paused,at:Date.now()};c.classList.add('holding');
+  if(G.time)G.paused=true;$('#board').style.filter='blur(10px)';buzz(15);tone(520,.06,'triangle',.06);
+  const pop=$('#defPop');
+  pop.innerHTML=`<div class="dp">${pts} PT${pts>1?'S':''}${G.time?' · ⏸ CLOCK STOPPED':''}</div><div class="dw">${w}</div><div class="dd" id="ddTxt"><i>looking it up…</i></div><div class="dc">Let go to keep playing</div>`;
+  pop.classList.add('on');
+  const d=await define(w);if(holding&&holding.c===c)$('#ddTxt').innerHTML=d}
+function endHold(){
+  if(!holding)return;const h=holding;holding=null;h.c.classList.remove('holding');$('#defPop').classList.remove('on');$('#board').style.filter='';
+  if(G&&!G.over&&!h.wasPaused){G.paused=false;G.lastFind+=Date.now()-h.at}}   // combo meter doesn't drain while you read
 /* ---------- hints (Zen): free, no coins ---------- */
 $('#btnHint').onclick=()=>{
   const left=[...G.sol.keys()].filter(w=>!G.found.has(w));if(!left.length)return;
@@ -777,7 +806,7 @@ function finishTutorial(skipped){hideFinger();G.over=true;ST.tutorial=true;saveA
 
 /* ================= end + results ================= */
 async function endGame(){
-  if(!G||G.over)return;G.over=true;clearInterval(G._iv);setPath([]);hideFinger();buzz([60,40,60]);
+  if(!G||G.over)return;if(holding)endHold();G.over=true;clearInterval(G._iv);setPath([]);hideFinger();buzz([60,40,60]);
   if(G.time&&G.left<=0){const ov=$('#overlay');ov.innerHTML='<b>TIME!</b>';ov.classList.add('on');sfx.end();await wait(900);ov.classList.remove('on')}else sfx.end();
   if(G.party)return partyNext();
   const found=[...G.found.keys()],pct=found.length/G.sol.size,stars=starsFor(pct);
