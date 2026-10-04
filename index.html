@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#14112b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Word Popper">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<title>Word Popper</title>
+<style>
+:root{
+  --bg:#14112b; --bg2:#1f1a45; --card:#2a2360; --card2:#342b78; --ink:#fff8ec; --dim:#b8b0dc;
+  --tile:#fff4dc; --tileInk:#2b1d0e; --tileEdge:#d8b98a; --sel:#ffb02e; --selInk:#2b1d0e; --selEdge:#c77d00;
+  --boardA:#3a2f86; --boardB:#231c55;
+  --good:#3ddc84; --dupe:#ffd23f; --bad:#ff5a6e; --accent:#7c5cff; --accent2:#ff7ad9; --gold:#ffc83d;
+  --r:18px; --font: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, sans-serif;
+}
+:root[data-theme="light"]{ --bg:#f6f0ff; --bg2:#ebe1ff; --card:#ffffff; --card2:#f0e9ff; --ink:#1d1640; --dim:#6a6290; --accent:#6a45ff }
+/* tile skins (earned) */
+:root[data-skin="wood"]{--tile:#e9c48f;--tileInk:#3b2210;--tileEdge:#9b6b38;--boardA:#6b4423;--boardB:#3e2611;--sel:#ffe08a}
+:root[data-skin="ocean"]{--tile:#d8f3ff;--tileInk:#0b3550;--tileEdge:#6fb4d6;--boardA:#0f5f8a;--boardB:#08304f;--sel:#5ff0d0;--selEdge:#22a88c}
+:root[data-skin="candy"]{--tile:#ffe3f1;--tileInk:#7a1550;--tileEdge:#f49ac7;--boardA:#ff7ab8;--boardB:#a2378a;--sel:#a6f0ff;--selEdge:#4fb8cc}
+:root[data-skin="neon"]{--tile:#16122e;--tileInk:#7dfcff;--tileEdge:#ff3df2;--boardA:#0a0820;--boardB:#000;--sel:#ff3df2;--selInk:#fff;--selEdge:#9a1690}
+:root[data-skin="forest"]{--tile:#e8f5dc;--tileInk:#1f3d17;--tileEdge:#86b56b;--boardA:#2f6b2a;--boardB:#163a14;--sel:#ffd166}
+:root[data-skin="gold"]{--tile:#fff1b8;--tileInk:#5a3d00;--tileEdge:#d1a017;--boardA:#2b2410;--boardB:#0f0c04;--sel:#ffffff;--selEdge:#d1a017}
+:root[data-skin="obsidian"]{--tile:#2a2a35;--tileInk:#ffb347;--tileEdge:#000;--boardA:#ff5e1a;--boardB:#5a0d00;--sel:#ffb347;--selInk:#1a0a00;--selEdge:#a04a00}
+:root[data-contrast="high"]{ --tile:#ffffff; --tileInk:#000; --tileEdge:#000; --sel:#ffd400; --selInk:#000; --dim:#e8e4ff }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation}
+body{background:radial-gradient(1200px 700px at 50% -10%,var(--bg2),var(--bg))}
+#bgfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+button{font-family:inherit;color:inherit;border:0;cursor:pointer}
+.screen{position:absolute;inset:0;display:none;overflow-x:hidden;flex-direction:column;align-items:center;z-index:1;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));overflow-y:auto}
+.screen.on{display:flex;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.wrap{width:100%;max-width:520px;display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* ---------- home ---------- */
+.logo{margin-top:2vh;font-size:clamp(44px,13vw,70px);font-weight:900;letter-spacing:-1px;line-height:1;text-align:center}
+.logo span{display:inline-block;animation:quake 3.2s ease-in-out infinite}
+.logo .lw{color:var(--sel)} .logo .q{color:var(--accent2)}
+@keyframes quake{0%,86%,100%{transform:none}88%{transform:translate(-3px,1px) rotate(-3deg)}90%{transform:translate(3px,-1px) rotate(3deg)}92%{transform:translate(-2px,0) rotate(-2deg)}94%{transform:translate(2px,1px) rotate(1deg)}}
+.tag{color:var(--dim);text-align:center;margin:-4px 0 4px;font-size:15px}
+.levelCard{width:100%;background:var(--card);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.lvl{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#ff8a3d);display:grid;place-items:center;font-weight:900;font-size:20px;color:#3a1d00;flex:none;box-shadow:0 3px 0 #b5561a}
+.xpbar{flex:1;height:12px;background:rgba(0,0,0,.3);border-radius:99px;overflow:hidden;margin-top:6px}
+.xpbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),#ff8a3d);border-radius:99px;transition:width 1s cubic-bezier(.3,1.3,.5,1)}
+.lvTitle{font-weight:900;font-size:16px} .lvSub{font-size:12px;color:var(--dim)}
+.big{width:100%;padding:16px 18px;border-radius:var(--r);background:var(--card);display:flex;align-items:center;gap:14px;
+  text-align:left;font-size:18px;font-weight:800;box-shadow:0 4px 0 rgba(0,0,0,.25);transition:transform .08s;position:relative}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.big .ico{font-size:30px;width:40px;text-align:center}
+.big small{display:block;font-weight:600;color:var(--dim);font-size:13px;margin-top:2px}
+.big.daily{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.big.daily small{color:#ffe9fb}
+.badge{position:absolute;top:-6px;right:-4px;background:var(--bad);color:#fff;border-radius:99px;font-size:12px;font-weight:900;padding:2px 8px;animation:pulse 1.4s infinite}
+.row{display:flex;gap:10px;width:100%}
+.row .big{justify-content:center;flex-direction:column;gap:4px;text-align:center;font-size:14px;padding:12px 6px}
+.row .big .ico{font-size:24px}
+.missions{width:100%;background:var(--card);border-radius:var(--r);padding:12px 14px}
+.missions h4{margin:0 0 8px;font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between}
+.mis{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:14px;font-weight:700}
+.mis .chk{width:22px;height:22px;border-radius:7px;background:rgba(0,0,0,.3);display:grid;place-items:center;font-size:13px;flex:none}
+.mis.done .chk{background:var(--good);color:#063}
+.mis.done .t{opacity:.6;text-decoration:line-through}
+.mis .t{flex:1}
+.mis .bar{width:60px;height:6px;background:rgba(0,0,0,.3);border-radius:9px;overflow:hidden}
+.mis .bar i{display:block;height:100%;background:var(--good)}
+.mis .xp{font-size:12px;color:var(--gold);width:48px;text-align:right}
+
+/* ---------- game ---------- */
+.hud{width:100%;max-width:520px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pill{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:800;font-size:16px;min-width:74px;text-align:center;transition:transform .15s}
+.pill.bump{transform:scale(1.2)}
+.pill.time.low{background:var(--bad);animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.iconbtn{background:var(--card);border-radius:12px;width:42px;height:42px;font-size:20px;display:grid;place-items:center}
+.comboRow{height:26px;display:flex;align-items:center;gap:8px;width:100%;max-width:520px;justify-content:center;font-weight:900}
+.combo{opacity:0;transition:opacity .2s;display:flex;align-items:center;gap:8px;color:#ff9a3d}
+.combo.on{opacity:1}
+.combo .cbar{width:80px;height:6px;background:rgba(0,0,0,.35);border-radius:9px;overflow:hidden}
+.combo .cbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff5a1f,#ffc83d)}
+.wordbar{height:50px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:30px;font-weight:900;letter-spacing:3px;
+  text-transform:uppercase;min-width:60%;transition:color .15s}
+.wordbar small{font-size:15px;letter-spacing:0;color:var(--gold);opacity:.9}
+.wordbar.good{color:var(--good)} .wordbar.dupe{color:var(--dupe)} .wordbar.bad{color:var(--bad);animation:shake .3s}
+.wordbar.glow{color:var(--good);text-shadow:0 0 18px rgba(61,220,132,.6)}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.boardWrap{position:relative;width:min(92vw,58vh,500px);aspect-ratio:1;touch-action:none}
+.board{position:absolute;inset:0;display:grid;gap:3%;padding:3%;background:linear-gradient(160deg,var(--boardA),var(--boardB));
+  border-radius:22px;box-shadow:inset 0 2px 0 rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.4);transition:transform .45s cubic-bezier(.5,1.6,.4,1)}
+.board.shaking{animation:boardShake .7s}
+@keyframes boardShake{10%,50%,90%{translate:-6px 2px;rotate:-2deg}30%,70%{translate:6px -2px;rotate:2deg}}
+.quake{animation:screenQuake .45s}
+@keyframes screenQuake{20%{transform:translate(-7px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+.tile{background:var(--tile);color:var(--tileInk);border-radius:16%;display:grid;place-items:center;font-weight:900;
+  box-shadow:0 5px 0 var(--tileEdge),0 6px 10px rgba(0,0,0,.3);transition:transform .1s,background .1s;position:relative}
+.tile span{display:block;transition:transform .45s}
+.dome{position:absolute;inset:-3%;border-radius:34%;z-index:4;cursor:pointer;display:grid;place-items:center;touch-action:none;
+  background:radial-gradient(ellipse 55% 40% at 32% 24%,rgba(255,255,255,.75),rgba(255,255,255,.12) 60%,transparent 61%),
+    radial-gradient(circle at 50% 55%,rgba(170,210,255,.10),rgba(170,210,255,.22) 70%,rgba(255,255,255,.38) 100%);
+  border:3px solid rgba(255,255,255,.45);box-shadow:inset 0 -14px 34px rgba(255,255,255,.18),inset 0 10px 24px rgba(255,255,255,.12),0 14px 34px rgba(0,0,0,.45);
+  -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);transition:transform .12s cubic-bezier(.3,1.6,.5,1)}
+.dome.press{transform:scale(.95,.88) translateY(3%)}
+.dome.bounce{animation:domeBounce .5s cubic-bezier(.3,1.8,.5,1)}
+@keyframes domeBounce{0%{transform:scale(.95,.88)}40%{transform:scale(1.06,1.1) translateY(-3%)}100%{transform:none}}
+.dome.gone{animation:domeOff .45s ease forwards;pointer-events:none}
+@keyframes domeOff{to{transform:scale(1.18);opacity:0}}
+.dome .lbl{background:rgba(20,17,43,.78);color:#fff;font-weight:900;font-size:clamp(15px,4.4vw,22px);padding:12px 20px;border-radius:99px;letter-spacing:1px;
+  box-shadow:0 4px 14px rgba(0,0,0,.4);animation:pulse 1.2s infinite;pointer-events:none;text-align:center}
+.dome .lbl small{display:block;font-size:12px;font-weight:700;opacity:.75;letter-spacing:0}
+.code{font-size:12px;color:var(--dim);margin-top:2px;letter-spacing:1px}
+.codeIn{width:100%;padding:14px;border-radius:12px;border:0;background:rgba(0,0,0,.3);color:var(--ink);font:inherit;font-weight:900;font-size:26px;text-align:center;letter-spacing:4px;text-transform:uppercase}
+.tile.sel{background:var(--sel);color:var(--selInk);transform:translateY(3px) scale(1.04);box-shadow:0 2px 0 var(--selEdge),0 0 22px var(--sel)}
+.tile.hint{animation:hintGlow 1.2s ease 2}
+@keyframes hintGlow{50%{background:var(--good);transform:scale(1.08)}}
+.tile.win{animation:tileWin .5s ease}
+@keyframes tileWin{0%{background:var(--good);transform:scale(1.15) translateY(-6px)}100%{transform:none}}
+.tile.drop{animation:tileDrop .5s cubic-bezier(.4,1.8,.5,1) both}
+@keyframes tileDrop{from{transform:translateY(-40px) scale(.6) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
+svg.path{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
+svg.path polyline{fill:none;stroke:var(--sel);stroke-opacity:.55;stroke-linecap:round;stroke-linejoin:round}
+.tools{display:flex;gap:10px;width:100%;max-width:520px;justify-content:center}
+.tools button{background:var(--card);border-radius:14px;padding:10px 14px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px}
+.found{width:100%;max-width:520px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:16vh;overflow-y:auto;padding:4px}
+.chip{background:var(--card);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.chip.long{background:linear-gradient(135deg,var(--gold),#ff8a3d);color:#3a1d00}
+.chip.new{animation:pop .35s}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.15)}}
+.float{position:fixed;font-weight:900;font-size:26px;color:var(--good);pointer-events:none;animation:floatUp .9s ease-out forwards;z-index:60;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+@keyframes floatUp{to{transform:translateY(-70px);opacity:0}}
+.callout{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);font-size:clamp(34px,10vw,58px);font-weight:900;z-index:60;pointer-events:none;
+  text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(255,200,61,.5);color:var(--gold);animation:callout 1.1s cubic-bezier(.3,1.6,.5,1) forwards;white-space:nowrap}
+@keyframes callout{0%{transform:translate(-50%,-50%) scale(.2) rotate(-8deg);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15) rotate(2deg);opacity:1}70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-80%) scale(.9);opacity:0}}
+.particle{position:fixed;width:9px;height:9px;border-radius:2px;pointer-events:none;z-index:59}
+.progress{width:100%;max-width:520px;height:8px;background:var(--card);border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+.overlay{position:fixed;inset:0;display:none;place-items:center;z-index:45;pointer-events:none}
+.overlay.on{display:grid}
+.overlay b{font-size:clamp(70px,24vw,140px);font-weight:900;color:#fff;text-shadow:0 6px 0 rgba(0,0,0,.35),0 0 40px var(--accent2);animation:count .8s ease forwards}
+@keyframes count{0%{transform:scale(2.2);opacity:0}30%{transform:scale(1);opacity:1}100%{transform:scale(.7);opacity:0}}
+.coach{width:100%;max-width:520px;background:var(--card);border-radius:var(--r);padding:12px 14px;text-align:center;font-weight:800;font-size:16px;line-height:1.35}
+.finger{position:fixed;font-size:40px;pointer-events:none;z-index:46;transition:left .45s ease,top .45s ease,opacity .3s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+
+/* ---------- results ---------- */
+.h1{font-size:30px;font-weight:900;margin:6px 0 0;text-align:center}
+.rank{font-size:15px;color:var(--dim);text-align:center}
+.stars{font-size:46px;letter-spacing:6px;height:56px}
+.stars span{display:inline-block;opacity:.18;filter:grayscale(1)}
+.stars span.on{opacity:1;filter:none;animation:starIn .5s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes starIn{from{transform:scale(0) rotate(-90deg)}to{transform:none}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.stat{background:var(--card);border-radius:14px;padding:12px 6px;text-align:center}
+.stat b{display:block;font-size:24px}
+.stat small{color:var(--dim);font-size:12px}
+.card{background:var(--card);border-radius:var(--r);padding:14px;width:100%}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--dim);font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.xpLines{display:flex;flex-direction:column;gap:3px;font-size:14px;font-weight:700}
+.xpLines div{display:flex;justify-content:space-between;animation:fadeIn .3s both}
+.xpLines div b{color:var(--gold)}
+.list{display:flex;flex-wrap:wrap;gap:6px}
+.w{border-radius:8px;padding:4px 8px;font-size:13px;font-weight:800;text-transform:uppercase;background:rgba(255,255,255,.07);cursor:pointer}
+.w.got,.w.mine{background:var(--good);color:#0b2a18}
+.w.x{text-decoration:line-through;opacity:.45}
+.def{min-height:40px;font-size:14px;line-height:1.4}
+.mini{display:grid;gap:4px;width:150px;margin:6px auto}
+.mini div{aspect-ratio:1;border-radius:6px;background:var(--tile);color:var(--tileInk);display:grid;place-items:center;font-weight:900;font-size:14px}
+.mini div.on{background:var(--sel);color:var(--selInk)}
+.btn{width:100%;padding:16px;border-radius:var(--r);font-size:17px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.btn.ghost{background:var(--card);color:var(--ink)}
+.btn:active{transform:translateY(3px)}
+.ach{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:14px;padding:10px 12px}
+.ach .ai{font-size:30px;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:rgba(0,0,0,.25);flex:none}
+.ach.locked .ai{filter:grayscale(1);opacity:.35}
+.ach.locked .an{opacity:.6}
+.ach .an{font-weight:900} .ach .ad{font-size:13px;color:var(--dim)}
+.achList{display:flex;flex-direction:column;gap:8px;width:100%}
+.skins{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%}
+.skin{background:var(--card);border-radius:16px;padding:12px;text-align:center;font-weight:800;border:3px solid transparent}
+.skin.on{border-color:var(--gold)}
+.skin.locked{opacity:.55}
+.skin .sw{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px;border-radius:10px;margin-bottom:8px}
+.skin .sw i{aspect-ratio:1;border-radius:5px;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:13px}
+.skin small{display:block;color:var(--dim);font-size:12px;font-weight:700}
+
+/* ---------- forms ---------- */
+.set{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:14px;padding:12px 14px;font-weight:700;gap:8px}
+.seg{display:flex;gap:4px;background:rgba(0,0,0,.25);border-radius:10px;padding:3px;flex-wrap:wrap;justify-content:flex-end}
+.seg button{background:none;padding:6px 10px;border-radius:8px;font-weight:800;font-size:14px}
+.seg button.on{background:var(--accent);color:#fff}
+input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:var(--card);color:var(--ink);font:inherit;font-weight:700;font-size:16px}
+.players{display:flex;flex-direction:column;gap:8px;width:100%}
+.prow{display:flex;gap:8px}
+.prow button{background:var(--card);border-radius:12px;width:48px;font-size:18px}
+.handoff{justify-content:center;text-align:center}
+.handoff .big-emoji{font-size:80px;animation:pulse 1.4s infinite}
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%) translateY(140px);background:#000d;color:#fff;padding:12px 18px;border-radius:14px;font-weight:800;transition:transform .3s;z-index:70;max-width:90vw;text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast.ach{background:linear-gradient(135deg,#3a2a00,#6b4a00);border:2px solid var(--gold)}
+.modal{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:50;padding:16px}
+.modal.on{display:grid;animation:fadeIn .2s}
+.modal .card{max-width:420px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;max-height:90vh;overflow-y:auto}
+.loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:100;font-weight:800;font-size:20px}
+.lvlup{font-size:64px;font-weight:900;background:linear-gradient(135deg,var(--gold),#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent;animation:starIn .6s cubic-bezier(.3,1.8,.5,1)}
+</style>
+</head>
+<body>
+<canvas id="bgfx"></canvas>
+<div class="loading" id="loading">Blowing up the bubble… 🫧</div>
+
+<!-- HOME -->
+<section class="screen" id="home"><div class="wrap">
+  <div class="logo"><span class="lw">Word</span><span class="q">Popper</span></div>
+  <div class="tag">Press the bubble. Pop the letters. No ads. Ever.</div>
+  <div class="levelCard" id="levelCard"><div class="lvl" id="lvlNum">1</div>
+    <div style="flex:1"><div class="lvTitle" id="lvlTitle">Level 1 · Fizz</div><div class="xpbar"><i id="xpFill"></i></div><div class="lvSub" id="lvlSub"></div></div></div>
+  <button class="big daily" id="btnDaily"><span class="ico">📅</span><div>Daily Pop <span id="dailyNo"></span><small id="dailySub">Same board for everyone today</small></div></button>
+  <button class="big" id="btnQuick"><span class="ico">⚡</span><div>Quick Play<small id="quickSub">3 minutes · 4×4</small></div></button>
+  <button class="big" id="btnParty"><span class="ico">🎉</span><div>Party (pass &amp; play)<small>Real rules: words someone else found get crossed out</small></div></button>
+  <button class="big" id="btnZen"><span class="ico">🧘</span><div>Zen<small>No clock. Free hints. Words glow when you're on one.</small></div></button>
+  <div class="missions" id="missions"></div>
+  <div class="row">
+    <button class="big" id="btnAwards"><span class="ico">🏆</span>Awards</button>
+    <button class="big" id="btnSkins"><span class="ico">🎨</span>Tiles</button>
+    <button class="big" id="btnStats"><span class="ico">📊</span>Stats</button>
+  </div>
+  <div class="row">
+    <button class="big" id="btnCode"><span class="ico">🔑</span>Enter a code</button>
+    <button class="big" id="btnHow"><span class="ico">🎓</span>Tutorial</button>
+    <button class="big" id="btnSettings"><span class="ico">⚙️</span>Settings</button>
+  </div>
+  <div class="rank" id="streakLine"></div>
+  <div class="missions" id="a2hs" style="display:none;text-align:center;font-weight:700;line-height:1.45">📲 <b>Keep it like an app:</b> tap the <b>Share</b> button <span style="font-size:18px">⎋</span> at the bottom of Safari, then <b>Add to Home Screen</b>.<br><span style="color:var(--dim);font-size:13px">Then it opens full-screen with its own icon and works with no signal.</span></div>
+</div></section>
+
+<!-- GAME -->
+<section class="screen" id="game">
+  <div class="hud">
+    <button class="iconbtn" id="btnQuit" aria-label="Quit">✕</button>
+    <div class="pill" id="score">0</div>
+    <div class="pill time" id="timer">3:00</div>
+    <button class="iconbtn" id="btnPause" aria-label="Pause">⏸</button>
+  </div>
+  <div class="progress" style="margin-top:10px"><i id="prog"></i></div>
+  <div style="font-size:12px;color:var(--dim);margin-top:4px" id="progTxt"></div><div class="code" id="codeTxt"></div>
+  <div class="comboRow"><div class="combo" id="combo">🔥 <span id="comboTxt">x2</span><div class="cbar"><i id="comboBar"></i></div></div></div>
+  <div class="wordbar" id="wordbar"></div>
+  <div class="coach" id="coach" style="display:none;margin-bottom:10px"></div>
+  <div class="boardWrap" id="boardWrap">
+    <div class="board" id="board"></div>
+    <svg class="path" id="pathSvg"><polyline id="pathLine"/></svg>
+    <div class="dome" id="dome"><div class="lbl">PRESS TO POP<small>hold &amp; let go</small></div></div>
+  </div>
+  <div class="tools" id="tools" style="margin-top:14px">
+    <button id="btnRotate">🔄 Rotate</button>
+    <button id="btnHint">💡 Hint</button>
+    <button id="btnDone">🏁 Done</button>
+  </div>
+  <div class="found" id="found" style="margin-top:10px"></div>
+</section>
+
+<section class="screen" id="results"><div class="wrap" id="resWrap"></div></section>
+
+<section class="screen" id="party"><div class="wrap">
+  <div class="h1">🎉 Party</div>
+  <div class="rank">Everyone plays the same board, one at a time. Then any word two people found gets crossed out — just like the table game.</div>
+  <div class="players" id="players"></div>
+  <button class="btn ghost" id="addPlayer">+ Add player</button>
+  <button class="btn" id="startParty">Start</button>
+  <button class="btn ghost" id="partyBack">Back</button>
+</div></section>
+
+<section class="screen handoff" id="handoff"><div class="wrap">
+  <div class="big-emoji">🙈</div>
+  <div class="h1" id="handName">Pass to …</div>
+  <div class="rank">Everyone else — no peeking!</div>
+  <button class="btn" id="handGo">I'm ready</button>
+</div></section>
+
+<section class="screen" id="settings"><div class="wrap">
+  <div class="h1">⚙️ Settings</div>
+  <div class="set">Board size<div class="seg" data-k="size"><button data-v="4">4×4</button><button data-v="5">5×5</button><button data-v="6">6×6</button></div></div>
+  <div class="set">Timer<div class="seg" data-k="time"><button data-v="60">1m</button><button data-v="120">2m</button><button data-v="180">3m</button><button data-v="300">5m</button></div></div>
+  <div class="set">Music<div class="seg" data-k="music"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="set">Sound effects<div class="seg" data-k="sound"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="set">Haptics<div class="seg" data-k="haptics"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="set">Theme<div class="seg" data-k="theme"><button data-v="dark">Dark</button><button data-v="light">Light</button></div></div>
+  <div class="set">High contrast<div class="seg" data-k="contrast"><button data-v="normal">Off</button><button data-v="high">On</button></div></div>
+  <div class="set">Floating letters<div class="seg" data-k="fx"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="rank">Daily Pop is always 4×4, 3 minutes, so scores compare fairly.</div>
+  <button class="btn" id="setBack">Done</button>
+</div></section>
+
+<section class="screen" id="listScr"><div class="wrap" id="listWrap"></div></section>
+
+<div class="overlay" id="overlay"></div>
+<div class="modal" id="modal"><div class="card" id="modalCard"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="words.js"></script>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ================= storage (never crashes) ================= */
+const store={get(k,d){try{const v=localStorage.getItem('wq_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('wq_'+k,JSON.stringify(v))}catch(e){}}};
+const S=Object.assign({size:4,time:180,sound:1,music:1,haptics:1,theme:'dark',contrast:'normal',fx:1,skin:'classic'},store.get('settings',{}));
+const ST=Object.assign({played:0,best:{},words:0,longest:'',daily:{},streak:0,lastDaily:null,bestDailyStreak:0,
+  xp:0,ach:{},tutorial:false,quRounds:0,partyGames:0},store.get('stats',{}));
+const saveAll=()=>{store.set('settings',S);store.set('stats',ST)};
+function applyLook(){const r=document.documentElement;r.dataset.theme=S.theme;r.dataset.contrast=S.contrast;r.dataset.skin=S.skin}
+applyLook();
+
+/* ================= dictionary trie ================= */
+let TRIE;
+function buildTrie(){
+  const root={};
+  for(const w of window.WQ_WORDS.split(' ')){let n=root;for(let i=0;i<w.length;i++){const c=w[i];n=n[c]||(n[c]={})}n.$=1}
+  TRIE=root;
+}
+
+/* ================= dice + solver ================= */
+const DICE4=['AAEEGN','ABBJOO','ACHOPS','AFFKPS','AOOTTW','CIMOTU','DEILRX','DELRVY','DISTTY','EEGHNW','EEINSU','EHRTVW','EIOSST','ELRTTY','HIMNUQ','HLNNRZ'];
+const DICE5=['AAAFRS','AAEEEE','AAFIRS','ADENNN','AEEEEM','AEEGMU','AEGMNN','AFIRSY','BJKQXZ','CCENST','CEIILT','CEILPT','CEIPST','DDHNOT','DHHLOR','DHLNOR','DHLNOR','EIIITT','EMOTTT','ENSSSU','FIPRSY','GORRVW','IPRRRY','NOOTUW','OOOTTU'];
+const DICE6=DICE5.concat(['AEINST','AEIOUR','DELNRS','EEILST','ACELRT','AEIMNS','EORSTU','BCDGMP','AEILNO','HKLNRS','AEIOST']);
+const MIN_WORDS={4:70,5:130,6:220};
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function roll(n,rand){
+  const dice=(n===4?DICE4:n===5?DICE5:DICE6).slice();
+  for(let i=dice.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[dice[i],dice[j]]=[dice[j],dice[i]]}
+  return dice.map(d=>{const c=d[Math.floor(rand()*6)];return c==='Q'?'qu':c.toLowerCase()});
+}
+function neighbors(i,n){const r=Math.floor(i/n),c=i%n,o=[];for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const R=r+dr,C=c+dc;if(R>=0&&C>=0&&R<n&&C<n)o.push(R*n+C)}return o}
+function solve(board,n,minLen){
+  const out=new Map(), used=new Array(board.length).fill(false), path=[];
+  const NB=board.map((_,i)=>neighbors(i,n));
+  function dfs(i,node,word){
+    for(const ch of board[i]){node=node[ch];if(!node)return}
+    word+=board[i];used[i]=true;path.push(i);
+    if(node.$&&word.length>=minLen&&!out.has(word))out.set(word,path.slice());
+    for(const j of NB[i])if(!used[j])dfs(j,node,word);
+    used[i]=false;path.pop();
+  }
+  for(let i=0;i<board.length;i++)dfs(i,TRIE,'');
+  return out;
+}
+function makeBoard(n,rand,minLen){
+  let best=null;
+  for(let t=0;t<60;t++){const b=roll(n,rand),s=solve(b,n,minLen);if(!best||s.size>best.sol.size)best={board:b,sol:s};if(s.size>=MIN_WORDS[n])break}
+  return best;
+}
+function findPath(word,board,n){
+  const NB=board.map((_,i)=>neighbors(i,n)),used=new Array(board.length).fill(false);
+  function go(i,pos,path){const t=board[i];if(word.substr(pos,t.length)!==t)return null;
+    used[i]=true;path.push(i);const np=pos+t.length;if(np===word.length)return path.slice();
+    for(const j of NB[i])if(!used[j]){const r=go(j,np,path);if(r)return r}
+    used[i]=false;path.pop();return null}
+  for(let i=0;i<board.length;i++){used.fill(false);const r=go(i,0,[]);if(r)return r}
+  return null;
+}
+const CODE_CH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function genCode(n,secs){let c='';for(let i=0;i<5;i++)c+=CODE_CH[Math.floor(Math.random()*CODE_CH.length)];return c+'-'+n+Math.round(secs/60)}
+function parseCode(raw){const c=String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!/^[A-HJ-NP-Z2-9]{5}[456][1235]$/.test(c))return null;return{code:c.slice(0,5)+'-'+c.slice(5),n:+c[5],secs:+c[6]*60}}
+function boardFromCode(pc){return makeBoard(pc.n,rng(hash('wordpopper-code-'+pc.code)),pc.n<=4?3:4)}
+function points(w,n){const L=w.length;if(n>=6&&L>=9)return 2*L;if(L<=4)return 1;if(L===5)return 2;if(L===6)return 3;if(L===7)return 5;return 11}
+
+/* ================= audio: sfx + generative music ================= */
+let AC;
+function ac(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}return AC}
+function tone(f,d=.08,type='sine',v=.12,when=0,force){if(!S.sound&&!force)return;const A=ac();if(!A)return;
+  const o=A.createOscillator(),g=A.createGain(),t=A.currentTime+when;o.type=type;o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(A.destination);o.start(t);o.stop(t+d+.02)}
+const sfx={tick:k=>tone(380+k*45,.05,'triangle',.07),
+  good:L=>{[523,659,784,1046,1318].slice(0,Math.min(5,L-1)).forEach((f,i)=>tone(f,.14,'triangle',.12,i*.06))},
+  dupe:()=>tone(300,.12,'square',.05),bad:()=>tone(160,.18,'sawtooth',.06),
+  end:()=>{[784,659,523,392].forEach((f,i)=>tone(f,.25,'triangle',.12,i*.12))},
+  shake:()=>{for(let i=0;i<12;i++)tone(70+Math.random()*140,.05,'square',.035,i*.05)},
+  beat:()=>{tone(62,.14,'sine',.35);tone(55,.12,'sine',.25,.16)},
+  count:k=>tone(k?440:880,k?.12:.3,'triangle',.14),
+  star:i=>tone(660+i*220,.25,'triangle',.12),
+  level:()=>{[523,659,784,1046,784,1046,1318].forEach((f,i)=>tone(f,.22,'triangle',.13,i*.09))},
+  ach:()=>{[880,1175,1568].forEach((f,i)=>tone(f,.2,'sine',.12,i*.08))},
+  combo:k=>tone(500+k*90,.1,'sawtooth',.05),
+  squish:()=>tone(140,.18,'sine',.12),
+  pop:()=>{const A=ac();if(!A||!S.sound)return;const t=A.currentTime,o=A.createOscillator(),g=A.createGain();
+    o.type='sine';o.frequency.setValueAtTime(950,t);o.frequency.exponentialRampToValueAtTime(140,t+.13);
+    g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+.16);o.connect(g).connect(A.destination);o.start(t);o.stop(t+.2);
+    for(let i=0;i<14;i++)tone(900+Math.random()*1600,.025,'square',.05,.12+Math.random()*.5)},
+  snap:()=>{[0,.04,.08].forEach((w,i)=>tone(1200+i*300,.04,'square',.06,w))}};
+const Music={iv:null,step:0,
+  start(){if(!S.music||this.iv||document.hidden)return;const A=ac();if(!A)return;this.bar();this.iv=setInterval(()=>this.bar(),3600)},
+  stop(){clearInterval(this.iv);this.iv=null},
+  pad(f,when,dur,v){const A=AC,t=A.currentTime+when,o=A.createOscillator(),g=A.createGain(),fl=A.createBiquadFilter();
+    o.type='triangle';o.frequency.value=f;fl.type='lowpass';fl.frequency.value=900;
+    g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+1.2);g.gain.linearRampToValueAtTime(.0001,t+dur);
+    o.connect(fl).connect(g).connect(A.destination);o.start(t);o.stop(t+dur+.1)},
+  bar(){if(!AC)return;const prog=[[220,261.6,329.6],[174.6,220,261.6],[196,246.9,293.7],[164.8,207.7,246.9]];
+    const ch=prog[this.step++%4];ch.forEach(f=>this.pad(f,0,3.9,.022));this.pad(ch[0]/2,0,3.9,.03);
+    const pent=[523,587,659,784,880,1046];for(let k=0;k<2;k++)if(Math.random()<.7)this.pad(pent[Math.floor(Math.random()*6)],.4+k*1.5+Math.random()*.4,1.2,.012)}};
+const TAURI=window.__TAURI__&&window.__TAURI__.core;
+function buzz(p){if(!S.haptics)return;
+  if(TAURI){const big=Array.isArray(p)?Math.max(...p):p;
+    const call=big<=10?['selection_feedback',{}]:['impact_feedback',{style:big<=25?'light':big<=40?'medium':'heavy'}];
+    TAURI.invoke('plugin:haptics|'+call[0],call[1]).catch(()=>{});return}
+  if(navigator.vibrate)try{navigator.vibrate(p)}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)Music.stop();else Music.start()});
+
+/* ================= floating-letter background ================= */
+const BG={c:$('#bgfx'),p:[],run:false,
+  init(){const c=this.c,d=devicePixelRatio||1;c.width=innerWidth*d;c.height=innerHeight*d;this.ctx=c.getContext('2d');this.ctx.setTransform(d,0,0,d,0,0);
+    this.p=Array.from({length:26},()=>this.mk(true));if(!this.run){this.run=true;requestAnimationFrame(t=>this.loop(t))}},
+  mk(any){return{x:Math.random()*innerWidth,y:any?Math.random()*innerHeight:innerHeight+40,s:16+Math.random()*34,v:.15+Math.random()*.35,
+    r:Math.random()*6.28,vr:(Math.random()-.5)*.01,l:'ABCDEFGHIKLMNOPRSTUWY'[Math.floor(Math.random()*21)],a:.04+Math.random()*.06}},
+  boost:0,
+  loop(){const x=this.ctx;x.clearRect(0,0,innerWidth,innerHeight);
+    if(S.fx&&!document.hidden){x.textAlign='center';x.textBaseline='middle';const col=getComputedStyle(document.documentElement).getPropertyValue('--ink');
+      for(const p of this.p){p.y-=p.v*(1+this.boost*6);p.r+=p.vr;if(p.y<-50)Object.assign(p,this.mk(false));
+        x.save();x.globalAlpha=p.a;x.fillStyle=col;x.font=`900 ${p.s}px ui-rounded,system-ui`;x.translate(p.x,p.y);x.rotate(p.r);x.fillText(p.l,0,0);x.restore()}
+      this.boost*=.95}
+    requestAnimationFrame(()=>this.loop())}};
+addEventListener('resize',()=>{BG.init();drawPath()});
+
+/* ================= juice helpers ================= */
+function show(id){$$('.screen').forEach(s=>s.classList.toggle('on',s.id===id))}
+let toastT;function toast(m,cls=''){const t=$('#toast');t.className='toast '+cls;t.innerHTML=m;void t.offsetWidth;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
+const toastQ=[];let toastBusy=false;
+function queueToast(m,cls){toastQ.push([m,cls]);if(!toastBusy)drainToasts()}
+async function drainToasts(){toastBusy=true;while(toastQ.length){const [m,c]=toastQ.shift();toast(m,c);await wait(2600)}toastBusy=false}
+function modal(html,sticky){$('#modal').dataset.sticky=sticky?1:'';$('#modalCard').innerHTML=html;$('#modal').classList.add('on')}
+const closeModal=()=>$('#modal').classList.remove('on');
+$('#modal').addEventListener('click',e=>{if((e.target.id==='modal'&&!$('#modal').dataset.sticky)||e.target.dataset.close!==undefined)closeModal()});
+function burst(x,y,n=18,colors=['#ffc83d','#ff7ad9','#7c5cff','#3ddc84','#5ff0ff']){
+  for(let i=0;i<n;i++){const p=document.createElement('div');p.className='particle';p.style.left=x+'px';p.style.top=y+'px';
+    p.style.background=colors[i%colors.length];document.body.appendChild(p);const a=Math.random()*6.28,d=60+Math.random()*120;
+    p.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+60}px) rotate(${Math.random()*720}deg)`,opacity:0}],
+      {duration:700+Math.random()*500,easing:'cubic-bezier(.2,.8,.4,1)'}).onfinish=()=>p.remove()}}
+function callout(text,color){const c=document.createElement('div');c.className='callout';c.textContent=text;if(color)c.style.color=color;document.body.appendChild(c);setTimeout(()=>c.remove(),1150)}
+function quake(){const g=$('#game');g.classList.remove('quake');void g.offsetWidth;g.classList.add('quake');BG.boost=1}
+function bump(el){el.classList.add('bump');setTimeout(()=>el.classList.remove('bump'),150)}
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const dstr=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>dstr(new Date());
+const dailyNumber=()=>Math.round((new Date(today()+'T12:00:00')-new Date('2026-10-01T12:00:00'))/864e5)+1;
+const RANKS=[[0,'Fizz'],[.05,'Bubble'],[.12,'Pop'],[.22,'Snap'],[.35,'Crackle'],[.5,'Boom'],[.7,'Kaboom'],[.9,'Supernova']];
+const rankFor=p=>RANKS.filter(r=>p>=r[0]).pop()[1];
+const starsFor=p=>p>=.45?3:p>=.25?2:p>=.1?1:0;
+
+/* ================= progression: XP, levels, titles ================= */
+const xpNeed=L=>Math.round(120+(L-1)*70);           // XP to go from L to L+1
+function levelOf(xp){let L=1;while(xp>=xpNeed(L)){xp-=xpNeed(L);L++}return{L,into:xp,need:xpNeed(L)}}
+const TITLES=[[1,'Fizz'],[3,'Bubbler'],[5,'Popper'],[8,'Snapper'],[12,'Crackler'],[16,'Big Bang'],[20,'Kaboom'],[30,'Supernova'],[40,'Pop Legend']];
+const titleFor=L=>TITLES.filter(t=>L>=t[0]).pop()[1];
+const SKINS=[
+  {id:'classic',name:'Classic',lvl:1,c:['#fff4dc','#2b1d0e','#3a2f86']},
+  {id:'wood',name:'Oak',lvl:3,c:['#e9c48f','#3b2210','#6b4423']},
+  {id:'ocean',name:'Ocean',lvl:5,c:['#d8f3ff','#0b3550','#0f5f8a']},
+  {id:'forest',name:'Forest',lvl:7,c:['#e8f5dc','#1f3d17','#2f6b2a']},
+  {id:'candy',name:'Candy',lvl:10,c:['#ffe3f1','#7a1550','#ff7ab8']},
+  {id:'neon',name:'Neon',lvl:14,c:['#16122e','#7dfcff','#0a0820']},
+  {id:'gold',name:'Gold',lvl:20,c:['#fff1b8','#5a3d00','#2b2410']},
+  {id:'obsidian',name:'Magma',ach:'pct100',c:['#2a2a35','#ffb347','#ff5e1a']}];
+const skinUnlocked=s=>s.ach?!!ST.ach[s.ach]:levelOf(ST.xp).L>=s.lvl;
+
+/* ================= achievements ================= */
+const ACH=[
+ ['first','🫧','First Pop','Find your first word'],
+ ['seven','💥','Big Pop','Find a 7-letter word'],
+ ['eight','🎆','Kaboom','Find a word of 8+ letters'],
+ ['popper','🎯','Popper','Find the longest word on a board'],
+ ['code','🔑','Challenger','Play a board from a challenge code'],
+ ['qu','👑','Quality','Use the Qu tile in a word'],
+ ['combo5','🔥','On Fire','Hit a 5-word combo'],
+ ['combo10','☄️','Unstoppable','Hit a 10-word combo'],
+ ['buzzer','⏱️','Buzzer Beater','Find a word in the last 3 seconds'],
+ ['angle','🔄','New Angle','Rotate, then find a word within 5 seconds'],
+ ['w25','📚','Word Hoard','25 words in one round'],
+ ['w50','🏛️','Lexicon','50 words in one round'],
+ ['s50','⭐','Fifty','Score 50 points in one round'],
+ ['s100','🌟','Century','Score 100 points in one round'],
+ ['stars3','✨','Three Stars','Earn 3 stars on a timed round'],
+ ['pct100','🏆','Cleared','Find every word on a board (unlocks Magma tiles)'],
+ ['daily1','📅','Daily Debut','Play a Daily Pop'],
+ ['streak3','🗓️','Habit','3-day daily streak'],
+ ['streak7','📆','Week Warrior','7-day daily streak'],
+ ['streak30','🗿','Monument','30-day daily streak'],
+ ['party','🎉','Party Starter','Finish a party game'],
+ ['big5','🧩','Bigger Board','Finish a 5×5 round'],
+ ['big6','🧱','Mega Board','Finish a 6×6 round'],
+ ['zen','🧘','Pure Zen','Find 30+ words in Zen without a hint'],
+ ['g10','🎮','Regular','Play 10 rounds'],
+ ['g100','💯','Devoted','Play 100 rounds'],
+ ['k1','📖','A Thousand Words','Find 1,000 words in total'],
+ ['lv10','🎖️','Double Digits','Reach level 10'],
+ ['lv25','🏅','Veteran','Reach level 25']];
+const ACH_XP=40;
+let pendingAch=[];
+function award(id){if(ST.ach[id])return;ST.ach[id]=Date.now();const a=ACH.find(x=>x[0]===id);if(!a)return;
+  pendingAch.push(id);ST.xp+=ACH_XP;sfx.ach();queueToast(`${a[1]} <b>${a[2]}</b> unlocked! <span style="color:var(--gold)">+${ACH_XP} XP</span>`,'ach');saveAll()}
+
+/* ================= daily missions ================= */
+const MPOOL=[
+ {id:'daily',t:'Play today\'s Daily Pop',n:1,xp:60},
+ {id:'words',t:'Find 40 words today',n:40,xp:50},
+ {id:'long6',t:'Find 3 words of 6+ letters',n:3,xp:60},
+ {id:'combo4',t:'Reach a 4-word combo',n:4,xp:50},
+ {id:'score40',t:'Score 40 in one round',n:40,xp:60},
+ {id:'rounds',t:'Play 3 rounds',n:3,xp:50},
+ {id:'seven',t:'Find a 7+ letter word',n:1,xp:70},
+ {id:'stars2',t:'Earn 2+ stars in a round',n:1,xp:60},
+ {id:'rotate',t:'Find 5 words after rotating',n:5,xp:40}];
+function missions(){
+  const d=today();let M=store.get('missions',null);
+  if(!M||M.date!==d){const r=rng(hash('m'+d)),pool=MPOOL.filter(m=>m.id!=='daily').slice();
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+    M={date:d,list:[MPOOL[0],pool[0],pool[1]].map(m=>({id:m.id,p:0,done:false}))};store.set('missions',M)}
+  return M}
+function mission(id,val,mode='add'){ // mode add | max
+  const M=missions();let changed=false;
+  for(const m of M.list){if(m.id!==id||m.done)continue;const def=MPOOL.find(x=>x.id===id);
+    m.p=mode==='max'?Math.max(m.p,val):m.p+val;changed=true;
+    if(m.p>=def.n){m.p=def.n;m.done=true;ST.xp+=def.xp;sfx.ach();queueToast(`🎯 Mission done: <b>${def.t}</b> <span style="color:var(--gold)">+${def.xp} XP</span>`,'ach')}}
+  if(changed){store.set('missions',M);saveAll()}}
+
+/* ================= game state ================= */
+let G=null;
+async function newGame(opts){
+  if(G&&G._cancelPop)G._cancelPop();
+  const n=opts.size, minLen=n<=4?3:4;
+  let b;
+  if(opts.board)b={board:opts.board,sol:opts.sol||solve(opts.board,n,minLen)};
+  else if(opts.code)b=boardFromCode(parseCode(opts.code));
+  else b=makeBoard(n,opts.seed!=null?rng(opts.seed):Math.random,minLen);
+  clearInterval(G&&G._iv);
+  let longest=0;for(const w of b.sol.keys())longest=Math.max(longest,w.length);
+  G={mode:opts.mode,n,minLen,board:b.board,sol:b.sol,found:new Map(),score:0,time:opts.time,left:opts.time,code:opts.code||null,longest,popper:false,
+     paused:false,over:false,ready:false,rot:0,hints:0,party:opts.party||null,combo:0,maxCombo:0,lastFind:0,rotAt:-1e9,xpCombo:0};
+  path=[];typed='';
+  const tut=G.mode==='tutorial',me=G;
+  $('#coach').style.display=tut?'':'none';$('#tools').style.display=tut?'none':'';
+  $('#found').innerHTML='';$('#wordbar').textContent='';$('#wordbar').className='wordbar';
+  $('#btnPause').style.visibility=G.time?'visible':'hidden';
+  $('#btnHint').style.display=G.mode==='zen'?'':'none';
+  $('#timer').style.display=G.time?'':'none';
+  $('#combo').classList.remove('on');
+  $('#codeTxt').textContent=G.code?'Board code '+G.code:'';
+  renderBoard();updateHud();show('game');Music.start();
+  if(tut){$('#coach').innerHTML='<b>Press the bubble</b>, then let go to pop the letters!';fingerOn($('#dome'))}
+  await waitForPop(me);if(G!==me||G.over)return;
+  hideFinger();
+  await popSequence(me);if(G!==me||G.over)return;
+  if(G.time){const ov=$('#overlay');ov.innerHTML='<b>GO!</b>';ov.classList.add('on');sfx.count(0);await wait(550);ov.classList.remove('on');
+    if(G!==me||G.over)return;G._iv=setInterval(tickClock,1000)}
+  G.ready=true;
+  if(tut)tutorialStep(0);
+}
+// The Trouble-style bubble: press it down, let go, the dice pop
+function waitForPop(me){
+  const d=$('#dome');d.className='dome';
+  return new Promise(res=>{let down=false;
+    const press=e=>{if(G!==me){cleanup();return res()}if(e&&e.cancelable)e.preventDefault();if(down)return;down=true;ac();d.classList.add('press');sfx.squish();buzz(20)};
+    const release=()=>{if(!down)return;cleanup();d.classList.remove('press');res()};
+    const key=e=>{if(!$('#game').classList.contains('on')||(e.key!==' '&&e.key!=='Enter'))return;e.preventDefault();e.type==='keydown'?press(e):release()};
+    function cleanup(){d.removeEventListener('pointerdown',press);removeEventListener('pointerup',release);removeEventListener('pointercancel',release);
+      document.removeEventListener('keydown',key);document.removeEventListener('keyup',key);me._cancelPop=null}
+    d.addEventListener('pointerdown',press);addEventListener('pointerup',release);addEventListener('pointercancel',release);
+    document.addEventListener('keydown',key);document.addEventListener('keyup',key);
+    me._cancelPop=()=>{cleanup();res()}})}
+async function popSequence(me){
+  const d=$('#dome'),ts=tiles(),A='ABCDEFGHIJKLMNOPRSTUVWY';
+  d.classList.add('bounce');sfx.pop();buzz([60]);BG.boost=1;
+  const r=$('#boardWrap').getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height*.45,30,['#ffffff','#bfe3ff','#ffc83d','#ff7ad9','#7c5cff']);
+  const jum=()=>`translate(${(Math.random()-.5)*30}%,${(Math.random()-.5)*30}%) rotate(${(Math.random()-.5)*70}deg)`;
+  const land=ts.map(jum);
+  const spin=setInterval(()=>ts.forEach(t=>t.firstChild.textContent=A[Math.floor(Math.random()*A.length)]),60);
+  ts.forEach((t,i)=>t.animate([{transform:t.style.transform||'none'},
+    {transform:`translateY(-${70+Math.random()*60}%) rotate(${(Math.random()-.5)*200}deg) scale(1.12)`,offset:.45},{transform:land[i]}],
+    {duration:520+Math.random()*120,easing:'cubic-bezier(.3,.7,.4,1)',fill:'forwards'}));
+  await wait(700);clearInterval(spin);
+  ts.forEach((t,i)=>{t.style.transform=land[i];t.getAnimations().forEach(a=>a.cancel())});   // landed all crooked
+  for(let i=0;i<5;i++)tone(300+Math.random()*500,.03,'square',.04,i*.04);buzz(15);
+  await wait(320);if(G!==me||G.over)return;
+  lockLetters();sfx.snap();buzz(30);d.classList.remove('bounce');d.classList.add('gone');   // snap into a neat grid
+  ts.forEach((t,i)=>{const from=t.style.transform;t.style.transform='';
+    t.animate([{transform:from},{transform:'none'}],{duration:380,delay:i*18,easing:'cubic-bezier(.3,1.5,.5,1)',fill:'backwards'})});
+  await wait(420+ts.length*18);
+}
+function tickClock(){if(!G||G.paused||G.over||!G.ready)return;G.left--;updateHud();
+  if(G.left<=15&&G.left>0){sfx.beat();if(G.left<=5)buzz(15)}
+  if(G.left<=0)endGame()}
+function updateHud(){
+  $('#score').textContent=G.score+' pts';
+  const t=$('#timer');t.textContent=fmt(Math.max(0,G.left));t.classList.toggle('low',!!G.time&&G.left<=15);
+  const p=G.found.size/G.sol.size;$('#prog').style.width=(p*100)+'%';
+  $('#progTxt').textContent=G.mode==='tutorial'?'Tutorial':G.found.size+' of '+G.sol.size+' words · '+rankFor(p)+' '+'★'.repeat(starsFor(p))+(G.popper?' · 🎯 Popper found!':` · 🎯 a ${G.longest}-letter word is hiding`);
+}
+// combo meter decays over 5s
+const COMBO_MS=5000;
+setInterval(()=>{if(!G||G.over||!G.combo)return;const left=1-(Date.now()-G.lastFind)/COMBO_MS;
+  if(left<=0||G.paused){if(left<=0){G.combo=0;$('#combo').classList.remove('on')}return}
+  $('#comboBar').style.width=(left*100)+'%'},100);
+// auto-pause: the clock never runs while you're away
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&G&&!G.over&&G.time&&G.ready&&!G.paused)pause()});
+function pause(){if(!G||!G.time||G.over)return;G.paused=true;
+  modal('<div class="h1">⏸ Paused</div><div class="rank">The board is hidden so nobody gets free looking time.</div><button class="btn" id="resume">Resume</button><button class="btn ghost" id="pQuit">Quit round</button>',1);
+  $('#board').style.filter='blur(14px)';
+  $('#resume').onclick=()=>{G.paused=false;G.lastFind=Date.now();$('#board').style.filter='';closeModal()};
+  $('#pQuit').onclick=()=>{$('#board').style.filter='';closeModal();quitPrompt()}}
+$('#btnPause').onclick=pause;
+function quitPrompt(){
+  if(G.mode==='tutorial'){finishTutorial(true);return}
+  if(G.time&&!G.over)G.paused=true;
+  modal('<div class="h1">Quit this round?</div><button class="btn" id="qYes">End round &amp; see results</button><button class="btn ghost" id="qHome">Leave without saving</button><button class="btn ghost" id="qKeep">Keep playing</button>',1);
+  $('#qKeep').onclick=()=>{closeModal();G.paused=false;G.lastFind=Date.now()};
+  $('#qYes').onclick=()=>{closeModal();G.paused=false;endGame()};
+  $('#qHome').onclick=()=>{closeModal();clearInterval(G._iv);G.over=true;$('#overlay').classList.remove('on');goHome()}}
+$('#btnQuit').onclick=quitPrompt;
+$('#btnDone').onclick=()=>{if(G&&G.ready&&!G.over)endGame()};
+
+/* ---------- board render ---------- */
+function renderBoard(){
+  const bd=$('#board');bd.style.gridTemplateColumns=`repeat(${G.n},1fr)`;bd.innerHTML='';
+  const fs=G.n<=3?'min(15vw,9vh,84px)':G.n===4?'min(11vw,6.4vh,64px)':G.n===5?'min(8.6vw,5.2vh,52px)':'min(7vw,4.2vh,42px)';
+  const A='ABCDEFGHIJKLMNOPRSTUVWY';
+  G.board.forEach((l,i)=>{const d=document.createElement('div');d.className='tile';d.dataset.i=i;d.style.fontSize=fs;
+    d.style.transform=`translate(${(Math.random()-.5)*24}%,${(Math.random()-.5)*24}%) rotate(${(Math.random()-.5)*60}deg)`;
+    d.innerHTML='<span>'+A[Math.floor(Math.random()*A.length)]+'</span>';bd.appendChild(d)});
+  applyRotation();
+}
+function lockLetters(){$$('#board .tile span').forEach((s,i)=>s.textContent=G.board[i]==='qu'?'Qu':G.board[i].toUpperCase())}
+function applyRotation(){$('#board').style.transform=`rotate(${G.rot}deg)`;$$('#board .tile span').forEach(s=>s.style.transform=`rotate(${-G.rot}deg)`);drawPath()}
+$('#btnRotate').onclick=()=>{if(!G||G.over)return;G.rot+=90;G.rotAt=Date.now();applyRotation();tone(500,.06,'triangle',.06);buzz(10)};
+
+/* ---------- input: drag, tap, or type ---------- */
+let path=[], dragging=false, moved=false, typed='', fbT;
+const tiles=()=>$$('#board .tile');
+const adj=(a,b)=>neighbors(a,G.n).includes(b);
+const word=()=>path.map(i=>G.board[i]).join('');
+function tileAt(x,y,strict){
+  for(const t of tiles()){const r=t.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const lim=strict?r.width*.5:r.width*.38; // inner hit zone so diagonal swipes don't clip neighbours
+    if(Math.abs(x-cx)<lim&&Math.abs(y-cy)<lim&&Math.hypot(x-cx,y-cy)<lim*1.15)return+t.dataset.i}
+  return null}
+function setPath(p){clearTimeout(fbT);path=p;tiles().forEach((t,i)=>t.classList.toggle('sel',path.includes(i)));
+  const wb=$('#wordbar'),w=word();wb.className='wordbar';
+  // Zen + tutorial: glow when you're on a real word you haven't found
+  if((G.mode==='zen'||G.mode==='tutorial')&&G.sol.has(w)&&!G.found.has(w))wb.classList.add('glow');
+  wb.innerHTML=w.toUpperCase()+(w.length>=G.minLen?`<small>+${points(w,G.n)}</small>`:'');drawPath()}
+function clearSoon(){ // free the board instantly so the next swipe is never eaten; keep the word up briefly as feedback
+  path=[];tiles().forEach(t=>t.classList.remove('sel'));drawPath();clearTimeout(fbT);
+  fbT=setTimeout(()=>{if(!path.length){const wb=$('#wordbar');wb.textContent='';wb.className='wordbar'}},450)}
+function drawPath(){
+  const wrap=$('#boardWrap').getBoundingClientRect(),line=$('#pathLine');
+  if(!G||path.length<2){line.setAttribute('points','');return}
+  const ts=tiles();line.setAttribute('stroke-width',(wrap.width/G.n)*.28);
+  line.setAttribute('points',path.map(i=>{const r=ts[i].getBoundingClientRect();return(r.left+r.width/2-wrap.left)+','+(r.top+r.height/2-wrap.top)}).join(' '));
+}
+function extend(i){
+  if(i==null)return;
+  if(path.length>1&&i===path[path.length-2]){setPath(path.slice(0,-1));sfx.tick(path.length);return} // slide back = undo
+  if(path.includes(i))return;
+  if(path.length&&!adj(path[path.length-1],i))return;
+  setPath(path.concat(i));sfx.tick(path.length);buzz(8);
+}
+const bw=$('#boardWrap');
+bw.addEventListener('pointerdown',e=>{
+  if(!G||G.over||G.paused||!G.ready)return;const i=tileAt(e.clientX,e.clientY,true);if(i==null)return;
+  e.preventDefault();typed='';dragging=true;moved=false;ac();
+  if(path.length&&i===path[path.length-1]){submit();dragging=false;return}   // tap last letter again = play it
+  if(path.length&&adj(path[path.length-1],i)&&!path.includes(i))extend(i);    // tap-to-build
+  else{setPath([i]);sfx.tick(1);buzz(8)}
+  try{bw.setPointerCapture(e.pointerId)}catch(_){}
+});
+bw.addEventListener('pointermove',e=>{if(!dragging)return;const i=tileAt(e.clientX,e.clientY,false);
+  if(i!=null&&i!==path[path.length-1]){moved=true;extend(i)}});
+const up=()=>{if(!dragging)return;dragging=false;if(moved&&path.length>=2)submit()};
+bw.addEventListener('pointerup',up);bw.addEventListener('pointercancel',up);
+document.addEventListener('keydown',e=>{
+  if(!$('#game').classList.contains('on')||!G||G.over||G.paused||!G.ready)return;
+  if(e.key==='Enter'){if(path.length)submit();else if(typed){typed='';sfx.bad();clearSoon()}return}
+  if(e.key==='Escape'){typed='';setPath([]);return}
+  if(e.key==='Backspace')typed=typed.slice(0,-1);
+  else if(/^[a-zA-Z]$/.test(e.key))typed+=e.key.toLowerCase();else return;
+  const p=typed?findPath(typed,G.board,G.n):[];
+  if(p)setPath(p);else{tiles().forEach(t=>t.classList.remove('sel'));path=[];drawPath();const wb=$('#wordbar');wb.textContent=typed.toUpperCase();wb.className='wordbar bad'}
+});
+
+function submit(){
+  const w=word(),wb=$('#wordbar'),p=path.slice();typed='';
+  if(G.mode==='tutorial')return tutorialSubmit(w,p);
+  if(w.length<G.minLen){wb.className='wordbar bad';sfx.bad();clearSoon();if(w.length>1)toast(`Words need ${G.minLen}+ letters`);return}
+  if(G.found.has(w)){wb.className='wordbar dupe';wb.textContent=w.toUpperCase()+' ✓';sfx.dupe();buzz(20);clearSoon();return}
+  if(!G.sol.has(w)){wb.className='wordbar bad';sfx.bad();buzz([20,30,20]);clearSoon();return}
+  const pts=points(w,G.n),now=Date.now();G.found.set(w,p);G.score+=pts;
+  // combo
+  G.combo=(now-G.lastFind<COMBO_MS&&G.combo)?G.combo+1:1;G.lastFind=now;G.maxCombo=Math.max(G.maxCombo,G.combo);
+  if(G.combo>=2){$('#combo').classList.add('on');$('#comboTxt').textContent='x'+G.combo+' combo';$('#comboBar').style.width='100%';sfx.combo(G.combo);G.xpCombo+=Math.min(G.combo-1,4)}
+  // feedback
+  wb.className='wordbar good';wb.textContent=w.toUpperCase();sfx.good(w.length);buzz(w.length>=7?[30,30,60]:25);
+  const ts=tiles();p.forEach((i,k)=>setTimeout(()=>{ts[i].classList.remove('win');void ts[i].offsetWidth;ts[i].classList.add('win')},k*40));
+  const r=ts[p[p.length-1]].getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const f=document.createElement('div');f.className='float';f.textContent='+'+pts;f.style.left=(cx-14)+'px';f.style.top=(cy-20)+'px';document.body.appendChild(f);setTimeout(()=>f.remove(),900);
+  burst(cx,cy,6+w.length*3);
+  if(w.length===G.longest&&!G.popper){G.popper=true;callout('🎯 POPPER WORD!','#5ff0ff');quake();burst(innerWidth/2,innerHeight/2,60);award('popper')}
+  else if(w.length>=8){callout('🎆 KABOOM!');quake();burst(innerWidth/2,innerHeight/2,50)}
+  else if(w.length===7){callout('💥 BIG POP!');quake()}
+  else if(w.length===6)callout('Nice!','#5ff0ff');
+  else if(G.combo===5||G.combo===10)callout(`🔥 x${G.combo} COMBO`,'#ff9a3d');
+  bump($('#score'));
+  const c=document.createElement('span');c.className='chip new'+(w.length>=6?' long':'');c.textContent=w;$('#found').prepend(c);
+  updateHud();clearSoon();
+  // rewards that trigger mid-round
+  award('first');if(w.length>=7)award('seven');if(w.length>=8)award('eight');if(w.includes('qu'))award('qu');
+  if(G.combo>=5)award('combo5');if(G.combo>=10)award('combo10');
+  if(G.time&&G.left<=3)award('buzzer');if(now-G.rotAt<5000)award('angle');
+  mission('words',1);if(w.length>=6)mission('long6',1);if(w.length>=7)mission('seven',1);mission('combo4',G.combo,'max');
+  if(G.rot%360)mission('rotate',1);
+  if(G.found.size===G.sol.size){callout('🏆 CLEARED!');setTimeout(endGame,1000)}
+}
+
+/* ---------- hints (Zen): free, no coins ---------- */
+$('#btnHint').onclick=()=>{
+  const left=[...G.sol.keys()].filter(w=>!G.found.has(w));if(!left.length)return;
+  left.sort((a,b)=>a.length-b.length);const w=left[Math.floor(Math.random()*Math.min(left.length,Math.max(5,left.length/3)))];
+  const p=G.sol.get(w);G.hints++;
+  p.slice(0,2).forEach(i=>{const t=tiles()[i];t.classList.remove('hint');void t.offsetWidth;t.classList.add('hint')});
+  toast(`💡 A ${w.length}-letter word starts with “${w.slice(0,2).toUpperCase()}”`);
+};
+
+/* ================= tutorial (interactive) ================= */
+const TUT={board:['c','a','t','o','d','s','r','e','y'],steps:[
+  {w:'cat',say:'<b>Swipe</b> across <b>C → A → T</b>, then let go.',path:[0,1,2]},
+  {w:'rode',say:'Now <b>tap</b> R, O, D, E one at a time — then <b>tap E again</b> to play it.',path:[6,3,4,7]},
+  {w:'dyes',say:'Diagonals count too! Find <b>DYES</b>. (The word glows green when you\'re on a real one.)',path:[4,8,7,5]}]};
+let tutI=0,fingerIv=null;
+function startTutorial(){tutI=0;newGame({mode:'tutorial',size:3,time:0,board:TUT.board})}
+function tutorialStep(i){tutI=i;const s=TUT.steps[i];$('#coach').innerHTML=`<span style="color:var(--dim);font-size:13px">STEP ${i+1} OF ${TUT.steps.length}</span><br>`+s.say;showFinger(s.path)}
+function showFinger(p){hideFinger();const f=document.createElement('div');f.className='finger';f.id='finger';f.textContent='👆';document.body.appendChild(f);
+  let k=0;const go=()=>{const ts=tiles();if(!ts.length)return;if(k%(p.length+1)===p.length){f.style.opacity=0}else{f.style.opacity=1;
+      const b=ts[p[k%(p.length+1)]].getBoundingClientRect();f.style.left=(b.left+b.width/2-12)+'px';f.style.top=(b.top+b.height/2-6)+'px'}k++};
+  go();fingerIv=setInterval(go,600)}
+function fingerOn(el){hideFinger();const f=document.createElement('div');f.className='finger';f.id='finger';f.textContent='👆';document.body.appendChild(f);
+  const b=el.getBoundingClientRect();f.style.left=(b.left+b.width/2-12)+'px';f.style.top=(b.top+b.height*.62)+'px';f.style.animation='pulse 1s infinite'}
+function hideFinger(){clearInterval(fingerIv);const f=$('#finger');if(f)f.remove()}
+function tutorialSubmit(w,p){
+  const s=TUT.steps[tutI],wb=$('#wordbar');
+  if(w!==s.w){wb.className='wordbar bad';sfx.bad();clearSoon();if(w.length>=3)toast(`Close! This step wants <b>${s.w.toUpperCase()}</b>`);return}
+  G.found.set(w,p);wb.className='wordbar good';wb.textContent=w.toUpperCase();sfx.good(w.length+1);
+  const ts=tiles();p.forEach((i,k)=>setTimeout(()=>{ts[i].classList.remove('win');void ts[i].offsetWidth;ts[i].classList.add('win')},k*40));
+  const r=ts[p[p.length-1]].getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,24);clearSoon();
+  if(tutI+1<TUT.steps.length)setTimeout(()=>tutorialStep(tutI+1),700);else setTimeout(()=>finishTutorial(false),700)}
+function finishTutorial(skipped){hideFinger();G.over=true;ST.tutorial=true;saveAll();
+  modal(`<div class="h1">${skipped?'Tutorial skipped':'🎓 You\'ve got it!'}</div>
+   <div style="text-align:left;line-height:1.55;font-size:15px">
+   • Longer words score way more: 3–4 letters = 1 · 5 = 2 · 6 = 3 · 7 = 5 · <b>8+ = 11</b><br>
+   • Find words <b>fast</b> to build a 🔥 combo — combos earn bonus XP<br>
+   • 🔄 <b>Rotate</b> the board to spot new words<br>
+   • On a keyboard you can just <b>type</b> and hit Enter<br>
+   • Level up to unlock new tile sets, and check today's 🎯 missions</div>
+   ${skipped?'':'<div style="color:var(--gold);font-weight:900">+50 XP</div>'}<button class="btn" id="tutGo">Play my first round</button><button class="btn ghost" id="tutHome">Home</button>`);
+  if(!skipped){ST.xp+=50;saveAll()}
+  $('#tutGo').onclick=()=>{closeModal();startMode('quick')};$('#tutHome').onclick=()=>{closeModal();goHome()}}
+
+/* ================= end + results ================= */
+async function endGame(){
+  if(!G||G.over)return;G.over=true;clearInterval(G._iv);setPath([]);hideFinger();buzz([60,40,60]);
+  if(G.time&&G.left<=0){const ov=$('#overlay');ov.innerHTML='<b>TIME!</b>';ov.classList.add('on');sfx.end();await wait(900);ov.classList.remove('on')}else sfx.end();
+  if(G.party)return partyNext();
+  const found=[...G.found.keys()],pct=found.length/G.sol.size,stars=starsFor(pct);
+  const longest=found.reduce((a,b)=>b.length>a.length?b:a,'');
+  const lvBefore=levelOf(ST.xp).L;
+  // ---- XP breakdown ----
+  const xp=[];const add=(label,v)=>{if(v>0)xp.push([label,v])};
+  add('Points',G.score);add('Words found',found.length);add('Combo bonus',G.xpCombo);
+  add(`${'★'.repeat(stars)} Stars`,stars*10);add('🎯 Popper word',G.popper?25:0);add('Long words (6+)',found.filter(w=>w.length>=6).length*3);
+  if(G.mode==='daily'&&!ST.daily[today()])add('Daily Pop',40);
+  if(G.mode==='zen')xp.forEach(x=>x[1]=Math.round(x[1]*.6)); // Zen is relaxed → a little less XP
+  const xpTotal=xp.reduce((s,x)=>s+x[1],0);ST.xp+=xpTotal;
+  // ---- stats ----
+  ST.played++;ST.words+=found.length;if(longest.length>ST.longest.length)ST.longest=longest;
+  const key=G.mode==='daily'?'daily':G.n+'x'+G.n+'_'+G.time;const newBest=G.mode!=='zen'&&G.score>0&&G.score>(ST.best[key]||0);
+  if(newBest)ST.best[key]=G.score;
+  if(G.mode==='daily'){const d=today();if(!ST.daily[d]){
+      const yd=dstr(new Date(Date.now()-864e5));ST.streak=ST.lastDaily===yd?ST.streak+1:1;ST.lastDaily=d;ST.bestDailyStreak=Math.max(ST.bestDailyStreak,ST.streak)}
+    ST.daily[d]={score:G.score,found:found.length,total:G.sol.size,longest}}
+  saveAll();
+  // ---- achievements + missions ----
+  if(found.length>=25)award('w25');if(found.length>=50)award('w50');if(G.score>=50)award('s50');if(G.score>=100)award('s100');
+  if(G.time&&stars===3)award('stars3');if(pct>=1)award('pct100');if(G.n===5)award('big5');if(G.n===6)award('big6');
+  if(G.mode==='zen'&&!G.hints&&found.length>=30)award('zen');
+  if(G.mode==='daily'){award('daily1');if(ST.streak>=3)award('streak3');if(ST.streak>=7)award('streak7');if(ST.streak>=30)award('streak30');mission('daily',1)}
+  if(ST.played>=10)award('g10');if(ST.played>=100)award('g100');if(ST.words>=1000)award('k1');
+  mission('rounds',1);mission('score40',G.score,'max');if(stars>=2)mission('stars2',1);
+  const lvAfter=levelOf(ST.xp).L;if(lvAfter>=10)award('lv10');if(lvAfter>=25)award('lv25');
+  renderResults({title:G.mode==='daily'?'Daily Pop #'+dailyNumber():G.mode==='zen'?'Zen round':'Round over',newBest,pct,stars,longest,xp,xpTotal,lvBefore});
+}
+function wordList(all,cls){return all.map(w=>`<span class="w ${cls(w)}" data-w="${w}">${w}</span>`).join('')}
+async function renderResults({title,newBest,pct,stars,longest,xp,xpTotal,lvBefore}){
+  Music.stop();
+  const all=[...G.sol.keys()].sort((a,b)=>b.length-a.length||a.localeCompare(b));
+  const missed=all.filter(w=>!G.found.has(w));const bestMiss=missed[0]||'';
+  const lv=levelOf(ST.xp);
+  $('#resWrap').innerHTML=`
+   <div class="h1">${title}</div>
+   <div class="stars" id="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div>
+   <div class="rank">Rank: <b>${rankFor(pct)}</b>${newBest?' · 🎉 New personal best!':''}</div>
+   <div class="stats"><div class="stat"><b id="cScore">0</b><small>points</small></div>
+     <div class="stat"><b>${G.found.size}/${G.sol.size}</b><small>words</small></div>
+     <div class="stat"><b>${Math.round(pct*100)}%</b><small>found</small></div></div>
+   <div class="card"><h3>XP earned</h3><div class="xpLines" id="xpLines"></div>
+     <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><div class="lvl" style="width:38px;height:38px;font-size:16px" id="rLvl">${lvBefore}</div>
+     <div style="flex:1"><div class="xpbar"><i id="rXp"></i></div><div class="lvSub" id="rXpTxt"></div></div></div></div>
+   <div class="card"><h3>Longest you found</h3><div style="font-size:22px;font-weight:900;text-transform:uppercase">${longest||'—'}</div>
+     ${bestMiss?`<h3 style="margin-top:10px">The one that got away</h3><div style="font-size:22px;font-weight:900;text-transform:uppercase;color:var(--accent2)">${bestMiss}</div>`:''}</div>
+   ${G.mode==='daily'?'<button class="btn" id="share">📤 Share result</button>':''}
+   ${G.code?`<div class="card" style="text-align:center"><h3>Challenge someone</h3><div style="font-size:30px;font-weight:900;letter-spacing:4px">${G.code}</div>
+     <div class="rank">They tap 🔑 Enter a code and get this exact board.</div><button class="btn" id="chal" style="margin-top:10px">📤 Send the challenge</button></div>`:''}
+   <div class="card"><h3>Every word on the board · tap one</h3>
+     <div class="mini" id="mini" style="grid-template-columns:repeat(${G.n},1fr)"></div>
+     <div class="def" id="def">Tap a word to see where it was hiding and what it means.</div>
+     <div class="list" id="allWords">${wordList(all,w=>G.found.has(w)?'got':'')}</div></div>
+   <button class="btn" id="again">${G.mode==='daily'?'Quick Play':'Play again'}</button>
+   <button class="btn ghost" id="toHome">Home</button>`;
+  hookWordTaps(G.board,G.n,G.sol);
+  $('#again').onclick=()=>startMode(G.mode==='zen'?'zen':'quick');
+  $('#toHome').onclick=goHome;
+  if($('#share'))$('#share').onclick=()=>shareDaily();
+  if($('#chal')){const sc=G.score,code=G.code;$('#chal').onclick=()=>shareText(`I scored ${sc} on Word Popper 🫧 board ${code}. Can you beat me?\n(Open Word Popper → 🔑 Enter a code → ${code})`)}
+  show('results');$('#results').scrollTop=0;
+  // --- the payoff sequence ---
+  const me=G;
+  const sc=$('#cScore');const t0=performance.now(),dur=Math.min(1200,300+G.score*15);
+  setTimeout(()=>{sc.textContent=me.score},dur+150);(function cnt(t){const k=Math.min(1,(t-t0)/dur);sc.textContent=Math.round(G.score*k);if(k<1)requestAnimationFrame(cnt)})(t0);
+  const st=$$('#stars span');for(let i=0;i<stars;i++){await wait(350);if(G!==me)return;st[i].classList.add('on');sfx.star(i);
+    const r=st[i].getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,14)}
+  for(const [l,v] of xp){await wait(160);$('#xpLines').insertAdjacentHTML('beforeend',`<div><span>${l}</span><b>+${v}</b></div>`);tone(700,.04,'triangle',.05)}
+  $('#xpLines').insertAdjacentHTML('beforeend',`<div style="border-top:1px solid rgba(255,255,255,.15);padding-top:4px;margin-top:2px"><span>Total</span><b>+${xpTotal} XP</b></div>`);
+  await wait(200);$('#rXp').style.width=(lv.into/lv.need*100)+'%';$('#rXpTxt').textContent=`${lv.into} / ${lv.need} XP to level ${lv.L+1}`;
+  if(lv.L>lvBefore){await wait(700);$('#rLvl').textContent=lv.L;levelUp(lvBefore,lv.L)}
+}
+function levelUp(from,to){
+  sfx.level();buzz([40,40,40,40,120]);burst(innerWidth/2,innerHeight/2,70);
+  const newSkins=SKINS.filter(s=>s.lvl&&s.lvl>from&&s.lvl<=to);
+  modal(`<div class="rank">LEVEL UP</div><div class="lvlup">${to}</div><div class="h1" style="font-size:22px">${titleFor(to)}</div>
+    ${newSkins.length?`<div class="card" style="background:var(--card2)"><h3>🎨 Unlocked</h3><div>${newSkins.map(s=>`<b>${s.name}</b> tiles`).join(', ')}</div></div><button class="btn" id="tryskin">Use ${newSkins[0].name} tiles</button>`:''}
+    <button class="btn ${newSkins.length?'ghost':''}" data-close>Awesome</button>`);
+  if(newSkins.length)$('#tryskin').onclick=()=>{S.skin=newSkins[0].id;saveAll();applyLook();closeModal();toast('🎨 '+newSkins[0].name+' tiles on')}}
+function hookWordTaps(board,n,sol){
+  const mini=$('#mini');mini.innerHTML=board.map(l=>`<div>${l==='qu'?'Qu':l.toUpperCase()}</div>`).join('');
+  $('#allWords').onclick=async e=>{const w=e.target.dataset&&e.target.dataset.w;if(!w)return;
+    const p=sol.get(w)||findPath(w,board,n)||[];[...mini.children].forEach((d,i)=>d.classList.toggle('on',p.includes(i)));
+    const def=$('#def'),head=`<b style="text-transform:uppercase">${w}</b> · ${points(w,n)} pt${points(w,n)>1?'s':''}`;
+    def.innerHTML=head+' · <i>looking up…</i>';const tok=++defTok,d=await define(w);if(tok===defTok)def.innerHTML=head+'<br>'+d};
+}
+const defCache={};let defTok=0;
+async function define(w){
+  if(defCache[w])return defCache[w];
+  const to=()=>AbortSignal.timeout?AbortSignal.timeout(4000):undefined;
+  const strip=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.trim()};
+  try{const r=await fetch('https://en.wiktionary.org/api/rest_v1/page/definition/'+w,{signal:to()});
+    if(r.ok){const j=await r.json();for(const m of (j.en||[]))for(const d of m.definitions||[]){const t=strip(d.definition||'');
+      if(t)return defCache[w]=`<i>${m.partOfSpeech.toLowerCase()}</i> — ${t}`}}}catch(e){}
+  try{const r=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+w,{signal:to()});
+    if(r.ok){const m=(await r.json())[0].meanings[0];return defCache[w]=`<i>${m.partOfSpeech}</i> — ${m.definitions[0].definition}`}}catch(e){}
+  return defCache[w]=navigator.onLine===false?'<span style="color:var(--dim)">Definitions need a connection — the game itself works fully offline.</span>':'<span style="color:var(--dim)">Valid in the official word list (no short definition on file).</span>';
+}
+function shareText(txt){
+  if(navigator.share)navigator.share({text:txt}).catch(()=>{});
+  else{try{navigator.clipboard.writeText(txt);toast('Copied — paste it in a text')}catch(e){modal(`<pre style="white-space:pre-wrap;text-align:left">${txt}</pre><button class="btn" data-close>OK</button>`)}}}
+function shareDaily(){
+  const d=ST.daily[today()];if(!d)return;const pct=d.found/d.total,blocks=10,on=Math.round(pct*blocks);
+  const txt=`Word Popper Daily #${dailyNumber()} 🫧\n${'🟪'.repeat(on)}${'⬛'.repeat(blocks-on)} ${Math.round(pct*100)}% ${'⭐'.repeat(starsFor(pct))}\n${d.score} pts · ${d.found}/${d.total} words · ${rankFor(pct)}\nLongest: ${d.longest.length} letters${ST.streak>1?' · 🔥'+ST.streak+' day streak':''}`;
+  if(navigator.share)navigator.share({text:txt}).catch(()=>{});
+  else{try{navigator.clipboard.writeText(txt);toast('Copied — paste it anywhere')}catch(e){modal(`<pre style="white-space:pre-wrap;text-align:left">${txt}</pre><button class="btn" data-close>OK</button>`)}}
+}
+
+/* ================= modes ================= */
+function startMode(m){
+  if(m==='daily'){const d=today();if(ST.daily[d]){showDailyDone();return}
+    newGame({mode:'daily',size:4,time:180,seed:hash('wordpopper-'+d)})}
+  else if(m==='zen')newGame({mode:'zen',size:S.size,time:0});
+  else newGame({mode:'quick',size:S.size,time:S.time,code:genCode(S.size,S.time)});
+}
+function showDailyDone(){const d=ST.daily[today()];
+  modal(`<div class="h1">✅ Daily done</div><div class="rank">${d.score} pts · ${d.found}/${d.total} words · ${rankFor(d.found/d.total)}<br>New board at midnight.</div>
+  <button class="btn" id="dShare">📤 Share</button><button class="btn ghost" data-close>OK</button>`);$('#dShare').onclick=shareDaily}
+$('#btnDaily').onclick=()=>startMode('daily');
+$('#btnQuick').onclick=()=>startMode('quick');
+$('#btnZen').onclick=()=>startMode('zen');
+$('#btnHow').onclick=startTutorial;
+$('#btnCode').onclick=()=>{modal(`<div class="h1">🔑 Enter a code</div><div class="rank">Got a challenge from someone? Type their board code to play the exact same board.</div>
+  <input class="codeIn" id="codeIn" maxlength="8" placeholder="K7Q2P-43" autocomplete="off" autocapitalize="characters" spellcheck="false">
+  <button class="btn" id="codeGo">Play this board</button><button class="btn ghost" data-close>Cancel</button>`);
+  const inp=$('#codeIn');setTimeout(()=>inp.focus(),50);
+  const go=()=>{const pc=parseCode(inp.value);if(!pc){sfx.bad();toast('That code doesn\'t look right — it\'s 5 letters, a dash and 2 numbers');return}
+    closeModal();award('code');newGame({mode:'quick',size:pc.n,time:pc.secs,code:pc.code})};
+  $('#codeGo').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()}};
+function goHome(){show('home');refreshHome();Music.start()}
+
+/* ---------- party ---------- */
+let PARTY={names:store.get('party',['Player 1','Player 2']),i:0,results:[],board:null};
+function renderPlayers(){$('#players').innerHTML=PARTY.names.map((n,i)=>`<div class="prow"><input class="name" value="${n.replace(/"/g,'&quot;')}" data-i="${i}" maxlength="14">${PARTY.names.length>2?`<button data-del="${i}">✕</button>`:''}</div>`).join('');
+  $$('#players input').forEach(inp=>inp.oninput=()=>{PARTY.names[+inp.dataset.i]=inp.value});
+  $$('#players [data-del]').forEach(b=>b.onclick=()=>{PARTY.names.splice(+b.dataset.del,1);renderPlayers()})}
+$('#btnParty').onclick=()=>{renderPlayers();show('party')};
+$('#addPlayer').onclick=()=>{if(PARTY.names.length<8){PARTY.names.push('Player '+(PARTY.names.length+1));renderPlayers()}};
+$('#partyBack').onclick=goHome;
+$('#startParty').onclick=()=>{
+  PARTY.names=PARTY.names.map((n,i)=>n.trim()||'Player '+(i+1));store.set('party',PARTY.names);
+  PARTY.code=genCode(S.size,S.time);PARTY.board=boardFromCode(parseCode(PARTY.code));PARTY.i=0;PARTY.results=[];handoff()};
+function handoff(){$('#handName').textContent='Pass to '+PARTY.names[PARTY.i];show('handoff')}
+$('#handGo').onclick=()=>newGame({mode:'party',size:S.size,time:S.time,board:PARTY.board.board,sol:PARTY.board.sol,party:true,code:PARTY.code});
+function partyNext(){
+  PARTY.results.push({name:PARTY.names[PARTY.i],words:[...G.found.keys()]});PARTY.i++;
+  if(PARTY.i<PARTY.names.length){setTimeout(handoff,300);return}
+  const count={};PARTY.results.forEach(r=>r.words.forEach(w=>count[w]=(count[w]||0)+1));
+  PARTY.results.forEach(r=>{r.unique=r.words.filter(w=>count[w]===1);r.score=r.unique.reduce((s,w)=>s+points(w,G.n),0)});
+  const ranked=PARTY.results.slice().sort((a,b)=>b.score-a.score);const medal=['🥇','🥈','🥉'];
+  const tie=ranked.length>1&&ranked[0].score===ranked[1].score;
+  $('#resWrap').innerHTML=`<div class="h1">🎉 ${tie?'It\'s a tie!':ranked[0].name+' wins!'}</div>
+   <div class="rank">Crossed-out words were found by more than one player.</div>
+   ${ranked.map((r,i)=>`<div class="card"><h3>${medal[i]||'·'} ${r.name} — ${r.score} pts</h3><div class="list">${
+     r.words.sort((a,b)=>b.length-a.length).map(w=>`<span class="w ${count[w]>1?'x':'mine'}">${w}</span>`).join('')||'<span class="rank">No words</span>'}</div></div>`).join('')}
+   <div class="card"><h3>Nobody found · ${G.sol.size-Object.keys(count).length} words · tap one</h3>
+     <div class="mini" id="mini" style="grid-template-columns:repeat(${G.n},1fr)"></div><div class="def" id="def"></div>
+     <div class="list" id="allWords">${wordList([...G.sol.keys()].filter(w=>!count[w]).sort((a,b)=>b.length-a.length),()=>'')}</div></div>
+   <button class="btn" id="again">Rematch (new board)</button><button class="btn ghost" id="toHome">Home</button>`;
+  hookWordTaps(G.board,G.n,G.sol);
+  $('#again').onclick=()=>$('#startParty').click();$('#toHome').onclick=goHome;
+  ST.played++;ST.partyGames++;ST.xp+=40;saveAll();award('party');
+  show('results');Music.stop();sfx.level();burst(innerWidth/2,innerHeight/3,60);
+}
+
+/* ---------- settings / stats / awards / skins ---------- */
+function renderSettings(){$$('.seg').forEach(seg=>{const k=seg.dataset.k;seg.querySelectorAll('button').forEach(b=>{
+  b.classList.toggle('on',String(S[k])===b.dataset.v);
+  b.onclick=()=>{const v=b.dataset.v;S[k]=isNaN(+v)?v:+v;saveAll();applyLook();renderSettings();if(k==='music'){S.music?Music.start():Music.stop()}}})})}
+$('#btnSettings').onclick=()=>{renderSettings();show('settings')};$('#setBack').onclick=goHome;
+function listScreen(html){$('#listWrap').innerHTML=html+'<button class="btn" id="lsBack">Back</button>';$('#lsBack').onclick=goHome;show('listScr');$('#listScr').scrollTop=0}
+$('#btnStats').onclick=()=>{
+  const bests=Object.entries(ST.best).map(([k,v])=>`<div class="set">${k==='daily'?'Daily':k.replace('_',' · ').replace(/(\d+)$/,s=>fmt(+s))}<b>${v}</b></div>`).join('')||'<div class="rank">Play a round to set a best.</div>';
+  const lv=levelOf(ST.xp);
+  listScreen(`<div class="h1">📊 Stats</div><div class="stats"><div class="stat"><b>${lv.L}</b><small>level</small></div><div class="stat"><b>${ST.played}</b><small>games</small></div>
+   <div class="stat"><b>${ST.words}</b><small>words found</small></div><div class="stat"><b>${ST.streak}</b><small>daily streak</small></div>
+   <div class="stat"><b>${Object.keys(ST.ach).length}/${ACH.length}</b><small>awards</small></div><div class="stat"><b>${ST.xp}</b><small>total XP</small></div></div>
+   <div class="card"><h3>Longest word ever</h3><div style="font-size:22px;font-weight:900;text-transform:uppercase">${ST.longest||'—'}</div></div>
+   <div class="card"><h3>Personal bests</h3><div style="display:flex;flex-direction:column;gap:6px">${bests}</div></div>`)};
+$('#btnAwards').onclick=()=>{const got=ACH.filter(a=>ST.ach[a[0]]);
+  listScreen(`<div class="h1">🏆 Awards</div><div class="rank">${got.length} of ${ACH.length} · each one is worth ${ACH_XP} XP</div><div class="achList">${
+    ACH.map(a=>`<div class="ach ${ST.ach[a[0]]?'':'locked'}"><div class="ai">${a[1]}</div><div><div class="an">${a[2]}</div><div class="ad">${a[3]}</div></div></div>`).join('')}</div>`)};
+$('#btnSkins').onclick=renderSkins;
+function renderSkins(){
+  listScreen(`<div class="h1">🎨 Tiles</div><div class="rank">Earn new tile sets by levelling up.</div><div class="skins">${SKINS.map(s=>{const ok=skinUnlocked(s);
+    return `<button class="skin ${S.skin===s.id?'on':''} ${ok?'':'locked'}" data-s="${s.id}"><div class="sw" style="background:${s.c[2]}">${'WOR'.split('').map(l=>`<i style="background:${s.c[0]};color:${s.c[1]}">${l}</i>`).join('')}</div>
+      ${s.name}<small>${ok?(S.skin===s.id?'In use':'Tap to use'):(s.ach?'🔒 Clear a whole board':'🔒 Level '+s.lvl)}</small></button>`}).join('')}</div>`);
+  $$('.skin').forEach(b=>b.onclick=()=>{const s=SKINS.find(x=>x.id===b.dataset.s);if(!skinUnlocked(s)){sfx.bad();toast(s.ach?'Find every word on one board to unlock':'Reach level '+s.lvl+' to unlock');return}
+    S.skin=s.id;saveAll();applyLook();tone(880,.1,'triangle',.1);renderSkins()})}
+$('#levelCard').onclick=renderSkins;
+
+function refreshHome(){
+  const lv=levelOf(ST.xp);
+  $('#lvlNum').textContent=lv.L;$('#lvlTitle').textContent=`Level ${lv.L} · ${titleFor(lv.L)}`;
+  $('#xpFill').style.width=(lv.into/lv.need*100)+'%';
+  const next=SKINS.find(s=>s.lvl&&s.lvl>lv.L);
+  $('#lvlSub').textContent=`${lv.into}/${lv.need} XP`+(next?` · ${next.name} tiles at level ${next.lvl}`:'');
+  $('#dailyNo').textContent='#'+dailyNumber();
+  const d=ST.daily[today()];$('#dailySub').textContent=d?`✅ Done today · ${d.score} pts · ${d.found}/${d.total} words`:'Same board for everyone today · +40 XP';
+  $('#quickSub').textContent=fmt(S.time)+' · '+S.size+'×'+S.size;
+  $('#streakLine').textContent=ST.streak?`🔥 ${ST.streak}-day daily streak · best ${ST.bestDailyStreak}`:'';
+  const M=missions(),done=M.list.filter(m=>m.done).length;
+  $('#missions').innerHTML=`<h4><span>🎯 Today's missions</span><span>${done}/3</span></h4>`+M.list.map(m=>{const def=MPOOL.find(x=>x.id===m.id);
+    return `<div class="mis ${m.done?'done':''}"><div class="chk">${m.done?'✓':''}</div><div class="t">${def.t}</div>${def.n>1&&!m.done?`<div class="bar"><i style="width:${m.p/def.n*100}%"></i></div>`:''}<div class="xp">+${def.xp}</div></div>`}).join('');
+}
+
+/* ================= web app install (iPhone/Android browsers only, never inside the native app) ================= */
+if(!window.__TAURI__&&'serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(!window.__TAURI__&&isIOS&&!navigator.standalone&&location.protocol==='https:')$('#a2hs').style.display='';
+/* ================= boot ================= */
+setTimeout(()=>{buildTrie();BG.init();$('#loading').remove();refreshHome();show('home');
+  if(!ST.tutorial){modal(`<div class="h1">Welcome to Word Popper 🫧</div><div class="rank">Pop the bubble, then chain touching letters into words before the clock runs out. Takes 30 seconds to learn.</div>
+    <button class="btn" id="wTut">Show me how</button><button class="btn ghost" id="wSkip">I already know how to play</button>`,1);
+    $('#wTut').onclick=()=>{closeModal();startTutorial()};$('#wSkip').onclick=()=>{closeModal();ST.tutorial=true;saveAll()}}
+  // browsers only allow audio after a tap
+  document.addEventListener('pointerdown',function first(){ac();Music.start();document.removeEventListener('pointerdown',first)},{once:true});
+},30);
+})();
+</script>
+</body>
+</html>

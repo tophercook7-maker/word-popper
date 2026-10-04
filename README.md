@@ -11,3 +11,6 @@ No ads. No accounts. Works offline.
 3. Tap **Install**, then open Word Popper.
 
 Made by Topher Cook.
+
+## Play on iPhone (or any phone)
+Open **https://tophercook7-maker.github.io/word-popper/** in Safari, then tap **Share → Add to Home Screen**.
