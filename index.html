@@ -260,7 +260,7 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
   <div class="tools" id="tools" style="margin-top:14px">
     <button id="btnRotate">🔄 Rotate</button>
     <button id="btnHint">💡 Hint</button>
-    <button id="btnDone">🏁 Done</button>
+    <button id="btnDone">⏭ Next</button>
   </div>
   <div class="found" id="found" style="margin-top:10px"></div>
 </section>
@@ -286,14 +286,15 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
 <section class="screen" id="settings"><div class="wrap">
   <div class="h1">⚙️ Settings</div>
   <div class="set">Board size<div class="seg" data-k="size"><button data-v="4">4×4</button><button data-v="5">5×5</button><button data-v="6">6×6</button></div></div>
-  <div class="set">Timer<div class="seg" data-k="time"><button data-v="60">1m</button><button data-v="120">2m</button><button data-v="180">3m</button><button data-v="300">5m</button></div></div>
+  <div class="set">Timer<div class="seg" data-k="time"><button data-v="30">30s</button><button data-v="60">1m</button><button data-v="90">1½m</button><button data-v="120">2m</button><button data-v="180">3m</button></div></div>
+  <div class="set">Autoplay next board<div class="seg" data-k="auto"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
   <div class="set">Music<div class="seg" data-k="music"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
   <div class="set">Sound effects<div class="seg" data-k="sound"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
   <div class="set">Haptics<div class="seg" data-k="haptics"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
   <div class="set">Theme<div class="seg" data-k="theme"><button data-v="dark">Dark</button><button data-v="light">Light</button></div></div>
   <div class="set">High contrast<div class="seg" data-k="contrast"><button data-v="normal">Off</button><button data-v="high">On</button></div></div>
   <div class="set">Floating letters<div class="seg" data-k="fx"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
-  <div class="rank">Daily Pop is always 4×4, 3 minutes, so scores compare fairly.</div>
+  <div class="rank">Daily Pop is always 4×4, 1½ minutes, so scores compare fairly.</div>
   <button class="btn" id="setBack">Done</button>
 </div></section>
 
@@ -313,7 +314,8 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 /* ================= storage (never crashes) ================= */
 const store={get(k,d){try{const v=localStorage.getItem('wq_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
   set(k,v){try{localStorage.setItem('wq_'+k,JSON.stringify(v))}catch(e){}}};
-const S=Object.assign({size:4,time:180,sound:1,music:1,haptics:1,theme:'dark',contrast:'normal',fx:1,skin:'classic'},store.get('settings',{}));
+const S=Object.assign({size:4,time:60,auto:1,sound:1,music:1,haptics:1,theme:'dark',contrast:'normal',fx:1,skin:'classic'},store.get('settings',{}));
+if(!S.v||S.v<2){S.time=60;S.auto=1;S.v=2}   // Andrew: 3 minutes was too long
 const ST=Object.assign({played:0,best:{},words:0,longest:'',daily:{},streak:0,lastDaily:null,bestDailyStreak:0,
   xp:0,ach:{},tutorial:false,quRounds:0,partyGames:0},store.get('stats',{}));
 const saveAll=()=>{store.set('settings',S);store.set('stats',ST)};
@@ -369,9 +371,9 @@ function findPath(word,board,n){
   return null;
 }
 const CODE_CH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-function genCode(n,secs){let c='';for(let i=0;i<5;i++)c+=CODE_CH[Math.floor(Math.random()*CODE_CH.length)];return c+'-'+n+Math.round(secs/60)}
+function genCode(n,secs){let c='';for(let i=0;i<5;i++)c+=CODE_CH[Math.floor(Math.random()*CODE_CH.length)];return c+'-'+n+(secs===30?'A':secs===90?'B':String(Math.round(secs/60)))}
 function parseCode(raw){const c=String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(!/^[A-HJ-NP-Z2-9]{5}[456][1235]$/.test(c))return null;return{code:c.slice(0,5)+'-'+c.slice(5),n:+c[5],secs:+c[6]*60}}
+  if(!/^[A-HJ-NP-Z2-9]{5}[456][1235AB]$/.test(c))return null;return{code:c.slice(0,5)+'-'+c.slice(5),n:+c[5],secs:c[6]==='A'?30:c[6]==='B'?90:+c[6]*60}}
 function boardFromCode(pc){return makeBoard(pc.n,rng(hash('wordpopper-code-'+pc.code)),pc.n<=4?3:4)}
 function points(w,n){const L=w.length;if(n>=6&&L>=9)return 2*L;if(L<=4)return 1;if(L===5)return 2;if(L===6)return 3;if(L===7)return 5;return 11}
 
@@ -514,7 +516,7 @@ const MPOOL=[
  {id:'words',t:'Find 40 words today',n:40,xp:50},
  {id:'long6',t:'Find 3 words of 6+ letters',n:3,xp:60},
  {id:'combo4',t:'Reach a 4-word combo',n:4,xp:50},
- {id:'score40',t:'Score 40 in one round',n:40,xp:60},
+ {id:'score40',t:'Score 25 in one round',n:25,xp:60},
  {id:'rounds',t:'Play 3 rounds',n:3,xp:50},
  {id:'seven',t:'Find a 7+ letter word',n:1,xp:70},
  {id:'stars2',t:'Earn 2+ stars in a round',n:1,xp:60},
@@ -554,9 +556,10 @@ async function newGame(opts){
   $('#timer').style.display=G.time?'':'none';
   $('#combo').classList.remove('on');
   $('#codeTxt').textContent=G.code?'Board code '+G.code:'';
+  $('#btnDone').textContent=G.mode==='quick'?'⏭ Next':'🏁 Done';stopAuto();
   renderBoard();updateHud();show('game');Music.start();
   if(tut){$('#coach').innerHTML='<b>Press the bubble</b>, then let go to pop the letters!';fingerOn($('#dome'))}
-  await waitForPop(me);if(G!==me||G.over)return;
+  await waitForPop(me,opts.autoPop);if(G!==me||G.over)return;
   hideFinger();
   await popSequence(me);if(G!==me||G.over)return;
   if(G.time){const ov=$('#overlay');ov.innerHTML='<b>GO!</b>';ov.classList.add('on');sfx.count(0);await wait(550);ov.classList.remove('on');
@@ -565,8 +568,8 @@ async function newGame(opts){
   if(tut)tutorialStep(0);
 }
 // The Trouble-style bubble: press it down, let go, the dice pop
-function waitForPop(me){
-  const d=$('#dome');d.className='dome';
+function waitForPop(me,auto){
+  const d=$('#dome');d.className='dome';d.querySelector('.lbl').innerHTML=auto?'POPPING…':'PRESS TO POP<small>hold &amp; let go</small>';
   return new Promise(res=>{let down=false;
     const press=e=>{if(G!==me){cleanup();return res()}if(e&&e.cancelable)e.preventDefault();if(down)return;down=true;ac();d.classList.add('press');sfx.squish();buzz(20)};
     const release=()=>{if(!down)return;cleanup();d.classList.remove('press');res()};
@@ -575,7 +578,8 @@ function waitForPop(me){
       document.removeEventListener('keydown',key);document.removeEventListener('keyup',key);me._cancelPop=null}
     d.addEventListener('pointerdown',press);addEventListener('pointerup',release);addEventListener('pointercancel',release);
     document.addEventListener('keydown',key);document.addEventListener('keyup',key);
-    me._cancelPop=()=>{cleanup();res()}})}
+    me._cancelPop=()=>{cleanup();res()};
+    if(auto)setTimeout(()=>{if(G!==me||down)return;press();setTimeout(release,260)},1100)})}
 async function popSequence(me){
   const d=$('#dome'),ts=tiles(),A='ABCDEFGHIJKLMNOPRSTUVWY';
   d.classList.add('bounce');sfx.pop();buzz([60]);BG.boost=1;
@@ -811,6 +815,9 @@ async function renderResults({title,newBest,pct,stars,longest,xp,xpTotal,lvBefor
   const missed=all.filter(w=>!G.found.has(w));const bestMiss=missed[0]||'';
   const lv=levelOf(ST.xp);
   $('#resWrap').innerHTML=`
+   ${G.mode==='quick'&&S.auto?`<div class="card" id="autoNext" style="position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;background:var(--card2);box-shadow:0 6px 18px rgba(0,0,0,.35)">
+     <div style="flex:1;font-weight:900"><span id="anTxt">Next board in 8</span><div class="xpbar"><i id="anBar" style="width:100%;transition:width .1s linear;background:linear-gradient(90deg,var(--accent),var(--accent2))"></i></div></div>
+     <button class="btn" style="width:auto;padding:10px 16px" id="anGo">Go ▶</button><button class="btn ghost" style="width:auto;padding:10px 14px" id="anStop">Stop</button></div>`:''}
    <div class="h1">${title}</div>
    <div class="stars" id="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div>
    <div class="rank">Rank: <b>${rankFor(pct)}</b>${newBest?' · 🎉 New personal best!':''}</div>
@@ -837,6 +844,7 @@ async function renderResults({title,newBest,pct,stars,longest,xp,xpTotal,lvBefor
   if($('#share'))$('#share').onclick=()=>shareDaily();
   if($('#chal')){const sc=G.score,code=G.code;$('#chal').onclick=()=>shareText(`I scored ${sc} on Word Popper 🫧 board ${code}. Can you beat me?\n(Open Word Popper → 🔑 Enter a code → ${code})`)}
   show('results');$('#results').scrollTop=0;
+  if($('#autoNext'))startAuto();
   // --- the payoff sequence ---
   const me=G;
   const sc=$('#cScore');const t0=performance.now(),dur=Math.min(1200,300+G.score*15);
@@ -848,6 +856,18 @@ async function renderResults({title,newBest,pct,stars,longest,xp,xpTotal,lvBefor
   await wait(200);$('#rXp').style.width=(lv.into/lv.need*100)+'%';$('#rXpTxt').textContent=`${lv.into} / ${lv.need} XP to level ${lv.L+1}`;
   if(lv.L>lvBefore){await wait(700);$('#rLvl').textContent=lv.L;levelUp(lvBefore,lv.L)}
 }
+let autoIv=null;
+function stopAuto(){clearInterval(autoIv);autoIv=null;const a=$('#autoNext');if(a)a.remove()}
+function startAuto(){
+  const TOTAL=8000;let end=Date.now()+TOTAL,last=Date.now();clearInterval(autoIv);
+  $('#anGo').onclick=()=>{stopAuto();startMode('quick',true)};
+  $('#anStop').onclick=()=>{stopAuto();toast('Autoplay stopped — tap Play again when you\'re ready')};
+  $('#allWords').addEventListener('click',()=>{if(autoIv){stopAuto();toast('Autoplay paused so you can look around')}});
+  autoIv=setInterval(()=>{
+    if(!$('#results').classList.contains('on')){stopAuto();return}
+    const now=Date.now();if($('#modal').classList.contains('on')||document.hidden){end+=now-last;last=now;return}   // hold while a level-up is showing
+    last=now;const left=end-now;$('#anBar').style.width=Math.max(0,left/TOTAL*100)+'%';$('#anTxt').textContent='Next board in '+Math.ceil(left/1000);
+    if(left<=0){stopAuto();startMode('quick',true)}},100)}
 function levelUp(from,to){
   sfx.level();buzz([40,40,40,40,120]);burst(innerWidth/2,innerHeight/2,70);
   const newSkins=SKINS.filter(s=>s.lvl&&s.lvl>from&&s.lvl<=to);
@@ -885,11 +905,11 @@ function shareDaily(){
 }
 
 /* ================= modes ================= */
-function startMode(m){
+function startMode(m,autoPop){
   if(m==='daily'){const d=today();if(ST.daily[d]){showDailyDone();return}
-    newGame({mode:'daily',size:4,time:180,seed:hash('wordpopper-'+d)})}
+    newGame({mode:'daily',size:4,time:90,seed:hash('wordpopper-'+d)})}
   else if(m==='zen')newGame({mode:'zen',size:S.size,time:0});
-  else newGame({mode:'quick',size:S.size,time:S.time,code:genCode(S.size,S.time)});
+  else newGame({mode:'quick',size:S.size,time:S.time,code:genCode(S.size,S.time),autoPop});
 }
 function showDailyDone(){const d=ST.daily[today()];
   modal(`<div class="h1">✅ Daily done</div><div class="rank">${d.score} pts · ${d.found}/${d.total} words · ${rankFor(d.found/d.total)}<br>New board at midnight.</div>
@@ -902,10 +922,10 @@ $('#btnCode').onclick=()=>{modal(`<div class="h1">🔑 Enter a code</div><div cl
   <input class="codeIn" id="codeIn" maxlength="8" placeholder="K7Q2P-43" autocomplete="off" autocapitalize="characters" spellcheck="false">
   <button class="btn" id="codeGo">Play this board</button><button class="btn ghost" data-close>Cancel</button>`);
   const inp=$('#codeIn');setTimeout(()=>inp.focus(),50);
-  const go=()=>{const pc=parseCode(inp.value);if(!pc){sfx.bad();toast('That code doesn\'t look right — it\'s 5 letters, a dash and 2 numbers');return}
+  const go=()=>{const pc=parseCode(inp.value);if(!pc){sfx.bad();toast('That code doesn\'t look right — it looks like K7Q2P-41');return}
     closeModal();award('code');newGame({mode:'quick',size:pc.n,time:pc.secs,code:pc.code})};
   $('#codeGo').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()}};
-function goHome(){show('home');refreshHome();Music.start()}
+function goHome(){stopAuto();show('home');refreshHome();Music.start()}
 
 /* ---------- party ---------- */
 let PARTY={names:store.get('party',['Player 1','Player 2']),i:0,results:[],board:null};
