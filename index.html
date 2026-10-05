@@ -809,6 +809,7 @@ async function endGame(){
   if(!G||G.over)return;if(holding)endHold();G.over=true;clearInterval(G._iv);setPath([]);hideFinger();buzz([60,40,60]);
   if(G.time&&G.left<=0){const ov=$('#overlay');ov.innerHTML='<b>TIME!</b>';ov.classList.add('on');sfx.end();await wait(900);ov.classList.remove('on')}else sfx.end();
   if(G.party)return partyNext();
+  try{if(window.parent!==window&&G.mode!=='tutorial')parent.postMessage({fp:'earn',game:'word-popper',score:G.score,words:G.found.size},'*')}catch(e){}
   const found=[...G.found.keys()],pct=found.length/G.sol.size,stars=starsFor(pct);
   const longest=found.reduce((a,b)=>b.length>a.length?b:a,'');
   const lvBefore=levelOf(ST.xp).L;
