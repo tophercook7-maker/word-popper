@@ -78,6 +78,10 @@ button{font-family:inherit;color:inherit;border:0;cursor:pointer}
 .hud{width:100%;max-width:520px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pill{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:800;font-size:16px;min-width:74px;text-align:center;transition:transform .15s}
 .pill.bump{transform:scale(1.2)}
+.lvpill{min-width:58px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.lvpill.up{animation:lvup .7s}
+@keyframes lvup{0%{transform:scale(1)}35%{transform:scale(1.45)}100%{transform:scale(1)}}
+.chip.gold{background:linear-gradient(135deg,#ffd76a,#ff9a3d);color:#2a1600}
 .pill.time.low{background:var(--bad);animation:pulse 1s infinite}
 @keyframes pulse{50%{transform:scale(1.07)}}
 .iconbtn{background:var(--card);border-radius:12px;width:42px;height:42px;font-size:20px;display:grid;place-items:center}
@@ -200,6 +204,14 @@ svg.path polyline{fill:none;stroke:var(--sel);stroke-opacity:.55;stroke-linecap:
 
 /* ---------- forms ---------- */
 .set{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:14px;padding:12px 14px;font-weight:700;gap:8px}
+.brkScr{position:fixed;inset:0;z-index:48;background:rgba(5,4,20,.92);display:none;align-items:center;justify-content:center;padding:20px}
+.brkScr.on{display:flex}
+.brkBox{width:min(420px,100%);background:var(--card2);border-radius:22px;padding:22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.brkTag{display:inline-block;font-size:11px;font-weight:900;letter-spacing:2px;padding:3px 10px;border-radius:99px;background:#ffc83d;color:#2b1d0e;margin-bottom:12px}
+.brkArt{font-size:64px;margin:6px 0}
+.brkBody{font-weight:700;line-height:1.4;margin:6px 0 16px;color:var(--dim)}
+#brkClose:disabled{opacity:.55}
+.big.noads{opacity:.92}
 .seg{display:flex;gap:4px;background:rgba(0,0,0,.25);border-radius:10px;padding:3px;flex-wrap:wrap;justify-content:flex-end}
 .seg button{background:none;padding:6px 10px;border-radius:8px;font-weight:800;font-size:14px}
 .seg button.on{background:var(--accent);color:#fff}
@@ -226,7 +238,7 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
 <!-- HOME -->
 <section class="screen" id="home"><div class="wrap">
   <div class="logo"><span class="lw">Word</span><span class="q">Popper</span></div>
-  <div class="tag">Press the bubble. Pop the letters. No ads. Ever.</div>
+  <div class="tag">Press the bubble. Pop the letters.</div>
   <div class="levelCard" id="levelCard"><div class="lvl" id="lvlNum">1</div>
     <div style="flex:1"><div class="lvTitle" id="lvlTitle">Level 1 · Fizz</div><div class="xpbar"><i id="xpFill"></i></div><div class="lvSub" id="lvlSub"></div></div></div>
   <button class="big daily" id="btnDaily"><span class="ico">📅</span><div>Daily Pop <span id="dailyNo"></span><small id="dailySub">Same board for everyone today</small></div></button>
@@ -244,6 +256,7 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
     <button class="big" id="btnHow"><span class="ico">🎓</span>Tutorial</button>
     <button class="big" id="btnSettings"><span class="ico">⚙️</span>Settings</button>
   </div>
+  <button class="big noads" id="btnNoAds"><span class="ico">🚫</span><div>Remove ads forever<small id="noAdsSub">One payment. No ads between rounds, ever.</small></div></button>
   <div class="rank" id="streakLine"></div>
   <div class="missions" id="a2hs" style="display:none;text-align:center;font-weight:700;line-height:1.45">📲 <b>Keep it like an app:</b> in Safari tap <b>Share</b> (or <b>•••</b> → <b>Share</b>), then <b>Add to Home Screen</b>.<br><span style="color:var(--dim);font-size:13px">Then it opens full-screen with its own icon and works with no signal.</span></div>
 </div></section>
@@ -253,6 +266,7 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
   <div class="hud">
     <button class="iconbtn" id="btnQuit" aria-label="Quit">✕</button>
     <div class="pill" id="score">0</div>
+    <div class="pill lvpill" id="rlv">Lv 1</div>
     <div class="pill time" id="timer">3:00</div>
     <button class="iconbtn" id="btnPause" aria-label="Pause">⏸</button>
   </div>
@@ -303,6 +317,10 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
   <div class="set">Theme<div class="seg" data-k="theme"><button data-v="dark">Dark</button><button data-v="light">Light</button></div></div>
   <div class="set">High contrast<div class="seg" data-k="contrast"><button data-v="normal">Off</button><button data-v="high">On</button></div></div>
   <div class="set">Floating letters<div class="seg" data-k="fx"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="set" id="adsRow">Ads<span id="adsState" style="font-weight:800"></span></div>
+  <button class="btn" id="setBuy">🚫 Remove ads forever</button>
+  <button class="btn ghost" id="setRestore">↩️ Restore my purchase</button>
+  <button class="btn ghost" id="setResetTest" style="display:none">🧪 Test only: bring ads back</button>
   <div class="rank">Daily Pop is always 4×4, 1½ minutes, so scores compare fairly.</div>
   <button class="btn" id="setBack">Done</button>
 </div></section>
@@ -311,6 +329,13 @@ input.name{width:100%;padding:12px 14px;border-radius:12px;border:0;background:v
 
 <div class="overlay" id="overlay"></div>
 <div class="modal" id="modal"><div class="card" id="modalCard"></div></div>
+<div class="brkScr" id="brkScr"><div class="brkBox">
+  <div class="brkTag" id="brkTag">TEST AD</div>
+  <div class="brkArt" id="brkArt">📣</div>
+  <div class="brkBody" id="brkBody">A real ad from Google would show here.</div>
+  <button class="btn" id="brkClose" disabled>Close in 5</button>
+  <button class="btn ghost" id="brkBuy">🚫 Remove ads forever</button>
+</div></div>
 <div class="toast" id="toast"></div>
 <div id="defPop"></div>
 
@@ -324,8 +349,9 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 /* ================= storage (never crashes) ================= */
 const store={get(k,d){try{const v=localStorage.getItem('wq_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
   set(k,v){try{localStorage.setItem('wq_'+k,JSON.stringify(v))}catch(e){}}};
-const S=Object.assign({size:4,time:60,auto:1,sound:1,music:1,haptics:1,theme:'dark',contrast:'normal',fx:1,skin:'classic'},store.get('settings',{}));
+const S=Object.assign({size:4,time:90,auto:1,sound:1,music:1,haptics:1,theme:'dark',contrast:'normal',fx:1,skin:'classic'},store.get('settings',{}));
 if(!S.v||S.v<2){S.time=60;S.auto=1;S.v=2}   // Andrew: 3 minutes was too long
+if(S.v<3){S.time=90;S.v=3}   // Andrew 10-24: 90 seconds, with levels to chase as you go
 const ST=Object.assign({played:0,best:{},words:0,longest:'',daily:{},streak:0,lastDaily:null,bestDailyStreak:0,
   xp:0,ach:{},tutorial:false,quRounds:0,partyGames:0},store.get('stats',{}));
 const saveAll=()=>{store.set('settings',S);store.set('stats',ST)};
@@ -410,9 +436,20 @@ const sfx={tick:k=>tone(380+k*45,.05,'triangle',.07),
     g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+.16);o.connect(g).connect(A.destination);o.start(t);o.stop(t+.2);
     for(let i=0;i<14;i++)tone(900+Math.random()*1600,.025,'square',.05,.12+Math.random()*.5)},
   snap:()=>{[0,.04,.08].forEach((w,i)=>tone(1200+i*300,.04,'square',.06,w))}};
-const Music={iv:null,step:0,
-  start(){if(!S.music||this.iv||document.hidden)return;const A=ac();if(!A)return;this.bar();this.iv=setInterval(()=>this.bar(),3600)},
-  stop(){clearInterval(this.iv);this.iv=null},
+// Real music (Deep Well Audio, by Topher) plays through an <audio> element, which works on Android where
+// the WebAudio synth can stay silent. If the file can't play, fall back to the soft generative pads.
+const TRACKS=['music/track1.mp3','music/track2.mp3','music/track3.mp3'];
+const Music={iv:null,step:0,el:null,ti:Math.floor(Math.random()*3),on:false,
+  start(){if(!S.music||this.on||document.hidden)return;this.on=true;
+    if(!this.el){this.el=new Audio();this.el.volume=.32;this.el.preload='auto';
+      this.el.addEventListener('ended',()=>{this.ti=(this.ti+1)%TRACKS.length;this.el.src=TRACKS[this.ti];this.el.play().catch(()=>{})})}
+    if(!this.el.src)this.el.src=TRACKS[this.ti];
+    this.el.play().then(()=>this.quietSynth()).catch(()=>{this.synth();
+      // blocked until the player touches the screen: try the real track again on the next tap
+      addEventListener('pointerdown',()=>{if(this.on)this.el.play().then(()=>this.quietSynth()).catch(()=>{})},{once:true})})},
+  quietSynth(){clearInterval(this.iv);this.iv=null},
+  synth(){if(this.iv||!this.on)return;const A=ac();if(!A)return;this.bar();this.iv=setInterval(()=>this.bar(),3600)},
+  stop(){this.on=false;if(this.el)this.el.pause();clearInterval(this.iv);this.iv=null},
   pad(f,when,dur,v){const A=AC,t=A.currentTime+when,o=A.createOscillator(),g=A.createGain(),fl=A.createBiquadFilter();
     o.type='triangle';o.frequency.value=f;fl.type='lowpass';fl.frequency.value=900;
     g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+1.2);g.gain.linearRampToValueAtTime(.0001,t+dur);
@@ -490,6 +527,9 @@ const ACH=[
  ['seven','💥','Big Pop','Find a 7-letter word'],
  ['eight','🎆','Kaboom','Find a word of 8+ letters'],
  ['popper','🎯','Popper','Find the longest word on a board'],
+ ['golden','🌟','Gold Digger','Find the hidden golden word'],
+ ['rlv5','🪜','Climber','Reach Level 5 in one round'],
+ ['rlv10','🚀','Sky High','Reach Level 10 in one round'],
  ['code','🔑','Challenger','Play a board from a challenge code'],
  ['qu','👑','Quality','Use the Qu tile in a word'],
  ['combo5','🔥','On Fire','Hit a 5-word combo'],
@@ -556,7 +596,8 @@ async function newGame(opts){
   clearInterval(G&&G._iv);
   let longest=0;for(const w of b.sol.keys())longest=Math.max(longest,w.length);
   G={mode:opts.mode,n,minLen,board:b.board,sol:b.sol,found:new Map(),score:0,time:opts.time,left:opts.time,code:opts.code||null,longest,popper:false,
-     paused:false,over:false,ready:false,rot:0,hints:0,party:opts.party||null,combo:0,maxCombo:0,lastFind:0,rotAt:-1e9,xpCombo:0};
+     paused:false,over:false,ready:false,rot:0,hints:0,party:opts.party||null,combo:0,maxCombo:0,lastFind:0,rotAt:-1e9,xpCombo:0,
+     lvl:1,golden:pickGolden(b.sol),bonusSecs:0};
   path=[];typed='';
   const tut=G.mode==='tutorial',me=G;
   $('#coach').style.display=tut?'':'none';$('#tools').style.display=tut?'none':'';
@@ -574,7 +615,8 @@ async function newGame(opts){
   await popSequence(me);if(G!==me||G.over)return;
   if(G.time){const ov=$('#overlay');ov.innerHTML='<b>GO!</b>';ov.classList.add('on');sfx.count(0);await wait(550);ov.classList.remove('on');
     if(G!==me||G.over)return;G._iv=setInterval(tickClock,1000)}
-  G.ready=true;
+  G.ready=true;G._startAt=Date.now();
+  if(G.mode!=='tutorial')tip('drag','Drag across letters that <b>touch</b> — up, down, sideways or diagonal.',300);
   if(tut)tutorialStep(0);
 }
 // The Trouble-style bubble: press it down, let go, the dice pop
@@ -610,10 +652,13 @@ async function popSequence(me){
   await wait(420+ts.length*18);
 }
 function tickClock(){if(!G||G.paused||G.over||!G.ready)return;G.left--;updateHud();
+  if(Date.now()-(G.lastFind||G._startAt)>12000&&G.found.size<3)tip('stuck','Stuck? Look for endings like <b>-S, -ED, -ER</b>, or tap 🔄 to turn the board.',0);
+  if(G.left===20)tip('clock','20 seconds! Grab quick 3- and 4-letter words to squeeze in one more level.',0);
   if(G.left<=15&&G.left>0){sfx.beat();if(G.left<=5)buzz(15)}
   if(G.left<=0)endGame()}
 function updateHud(){
   $('#score').textContent=G.score+' pts';
+  const rl=$('#rlv');rl.style.display=G.mode==='tutorial'?'none':'';rl.textContent='Lv '+G.lvl;
   const t=$('#timer');t.textContent=fmt(Math.max(0,G.left));t.classList.toggle('low',!!G.time&&G.left<=15);
   const p=G.found.size/G.sol.size;$('#prog').style.width=(p*100)+'%';
   $('#progTxt').textContent=G.mode==='tutorial'?'Tutorial':G.found.size+' of '+G.sol.size+' words · '+rankFor(p)+' '+'★'.repeat(starsFor(p))+(G.popper?' · 🎯 Popper found!':` · 🎯 a ${G.longest}-letter word is hiding`);
@@ -715,7 +760,7 @@ function submit(){
   if(w.length<G.minLen){wb.className='wordbar bad';sfx.bad();clearSoon();if(w.length>1)toast(`Words need ${G.minLen}+ letters`);return}
   if(G.found.has(w)){wb.className='wordbar dupe';wb.textContent=w.toUpperCase()+' ✓';sfx.dupe();buzz(20);clearSoon();return}
   if(!G.sol.has(w)){wb.className='wordbar bad';sfx.bad();buzz([20,30,20]);clearSoon();return}
-  const pts=points(w,G.n),now=Date.now();G.found.set(w,p);G.score+=pts;
+  let pts=points(w,G.n);const now=Date.now(),gold=w===G.golden;if(gold)pts*=3;G.found.set(w,p);G.score+=pts;
   // combo
   G.combo=(now-G.lastFind<COMBO_MS&&G.combo)?G.combo+1:1;G.lastFind=now;G.maxCombo=Math.max(G.maxCombo,G.combo);
   if(G.combo>=2){$('#combo').classList.add('on');$('#comboTxt').textContent='x'+G.combo+' combo';$('#comboBar').style.width='100%';sfx.combo(G.combo);G.xpCombo+=Math.min(G.combo-1,4)}
@@ -731,8 +776,12 @@ function submit(){
   else if(w.length===6)callout('Nice!','#5ff0ff');
   else if(G.combo===5||G.combo===10)callout(`🔥 x${G.combo} COMBO`,'#ff9a3d');
   bump($('#score'));
-  const c=document.createElement('span');c.className='chip new'+(w.length>=6?' long':'');c.textContent=w;$('#found').prepend(c);
-  updateHud();clearSoon();
+  if(gold){callout('🌟 GOLDEN WORD x3!','#ffd76a');quake();burst(innerWidth/2,innerHeight/2,70);award('golden')}
+  const c=document.createElement('span');c.className='chip new'+(gold?' gold':w.length>=6?' long':'');c.textContent=w;$('#found').prepend(c);
+  updateHud();clearSoon();checkLevel();
+  if(G.found.size===1)tip('lv',`Find <b>${wordsFor(2)} words</b> to level up. Every level adds points and ${LV_SECS} seconds — the levels never stop.`,1400);
+  if(G.found.size===4)tip('gold','One word on every board is a hidden 🌟 <b>golden word</b> worth triple. 5–7 letters long.',800);
+  if(G.lvl>=3)tip('long','Longer words score way more: a 7-letter word is worth 5 short ones.',800);
   // rewards that trigger mid-round
   if(!ST.holdTip){ST.holdTip=1;saveAll();setTimeout(()=>queueToast('💡 Press &amp; <b>hold</b> a word below to see what it means. The clock stops while you hold.'),900)}
   award('first');if(w.length>=7)award('seven');if(w.length>=8)award('eight');if(w.includes('qu'))award('qu');
@@ -804,18 +853,37 @@ function finishTutorial(skipped){hideFinger();G.over=true;ST.tutorial=true;saveA
   if(!skipped){ST.xp+=50;saveAll()}
   $('#tutGo').onclick=()=>{closeModal();startMode('quick')};$('#tutHome').onclick=()=>{closeModal();goHome()}}
 
+/* ================= round levels (Andrew 10-24: rewards + levels per words as you go) ================= */
+// Words needed to REACH each level this round: 3, 7, 12, 18, 25, 33 ... each gap one bigger, and it never tops out.
+function wordsFor(L){return L<=1?0:(L-1)*(L+4)/2}
+function roundLevel(n){let L=1;while(wordsFor(L+1)<=n)L++;return L}
+const LV_SECS=5;   // each level-up puts 5 seconds back on the clock
+function pickGolden(sol){const c=[...sol.keys()].filter(w=>w.length>=5&&w.length<=7);return c.length?c[Math.floor(Math.random()*c.length)]:null}
+function checkLevel(){const L=roundLevel(G.found.size);if(L<=G.lvl)return;
+  while(G.lvl<L){G.lvl++;const bonus=G.lvl*2;G.score+=bonus;
+    if(G.time){G.left+=LV_SECS;G.bonusSecs+=LV_SECS}
+    callout(`⬆️ LEVEL ${G.lvl}!`,'#ffd76a');sfx.level();buzz([30,40,30]);burst(innerWidth/2,innerHeight/3,40);
+    queueToast(`Level ${G.lvl}: <b>+${bonus} pts</b>${G.time?` · <b>+${LV_SECS}s</b> on the clock`:''} · next level at ${wordsFor(G.lvl+1)} words`)}
+  const pl=$('#rlv');pl.classList.remove('up');void pl.offsetWidth;pl.classList.add('up');
+  if(G.lvl>=5)award('rlv5');if(G.lvl>=10)award('rlv10');
+  if(G.lvl>(ST.bestRoundLv||1)){ST.bestRoundLv=G.lvl;saveAll()}
+  updateHud()}
+// tips that teach while you play, each shown once
+function tip(id,msg,delay=600){ST.tips=ST.tips||{};if(ST.tips[id]||G.mode==='tutorial')return;ST.tips[id]=1;saveAll();setTimeout(()=>queueToast('💡 '+msg),delay)}
+
 /* ================= end + results ================= */
 async function endGame(){
   if(!G||G.over)return;if(holding)endHold();G.over=true;clearInterval(G._iv);setPath([]);hideFinger();buzz([60,40,60]);
   if(G.time&&G.left<=0){const ov=$('#overlay');ov.innerHTML='<b>TIME!</b>';ov.classList.add('on');sfx.end();await wait(900);ov.classList.remove('on')}else sfx.end();
   if(G.party)return partyNext();
+  if(G.mode!=='tutorial')Ads.roundDone();
   try{if(window.parent!==window&&G.mode!=='tutorial')parent.postMessage({fp:'earn',game:'word-popper',score:G.score,words:G.found.size},'*')}catch(e){}
   const found=[...G.found.keys()],pct=found.length/G.sol.size,stars=starsFor(pct);
   const longest=found.reduce((a,b)=>b.length>a.length?b:a,'');
   const lvBefore=levelOf(ST.xp).L;
   // ---- XP breakdown ----
   const xp=[];const add=(label,v)=>{if(v>0)xp.push([label,v])};
-  add('Points',G.score);add('Words found',found.length);add('Combo bonus',G.xpCombo);
+  add('Points',G.score);add('Words found',found.length);add(`Round level ${G.lvl}`,(G.lvl-1)*5);add('Combo bonus',G.xpCombo);
   add(`${'★'.repeat(stars)} Stars`,stars*10);add('🎯 Popper word',G.popper?25:0);add('Long words (6+)',found.filter(w=>w.length>=6).length*3);
   if(G.mode==='daily'&&!ST.daily[today()])add('Daily Pop',40);
   if(G.mode==='zen')xp.forEach(x=>x[1]=Math.round(x[1]*.6)); // Zen is relaxed → a little less XP
@@ -857,6 +925,10 @@ async function renderResults({title,newBest,pct,stars,longest,xp,xpTotal,lvBefor
    <div class="card"><h3>XP earned</h3><div class="xpLines" id="xpLines"></div>
      <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><div class="lvl" style="width:38px;height:38px;font-size:16px" id="rLvl">${lvBefore}</div>
      <div style="flex:1"><div class="xpbar"><i id="rXp"></i></div><div class="lvSub" id="rXpTxt"></div></div></div></div>
+   ${G.mode!=='tutorial'?`<div class="card" style="text-align:center"><h3>Round level</h3><div style="font-size:40px;font-weight:900;color:var(--gold)">Lv ${G.lvl}</div>
+     <div class="rank">${(()=>{const need=wordsFor(G.lvl+1)-G.found.size;return need<=3?`😩 Just <b>${need} word${need>1?'s':''}</b> from Level ${G.lvl+1}!`:`${need} more words would have hit Level ${G.lvl+1}`})()}
+     · Your best: <b>Lv ${Math.max(ST.bestRoundLv||1,G.lvl)}</b>${G.bonusSecs?` · earned +${G.bonusSecs}s`:''}</div>
+     ${G.golden?`<div class="rank" style="margin-top:6px">🌟 Golden word: <b style="text-transform:uppercase">${G.golden}</b> ${G.found.has(G.golden)?'— you got it!':'— missed it'}</div>`:''}</div>`:''}
    <div class="card"><h3>Longest you found</h3><div style="font-size:22px;font-weight:900;text-transform:uppercase">${longest||'—'}</div>
      ${bestMiss?`<h3 style="margin-top:10px">The one that got away</h3><div style="font-size:22px;font-weight:900;text-transform:uppercase;color:var(--accent2)">${bestMiss}</div>`:''}</div>
    ${G.mode==='daily'?'<button class="btn" id="share">📤 Share result</button>':''}
@@ -935,7 +1007,105 @@ function shareDaily(){
 }
 
 /* ================= modes ================= */
-function startMode(m,autoPop){
+/* ================= ads + "remove ads" purchase =================
+   Free version: a short ad between rounds (never during play, never in Party or the tutorial).
+   One purchase removes ads for good. Until the real AdMob / App Store / Play billing hookup is in,
+   everything runs in TEST mode: a pretend ad, and a pretend purchase that charges nothing. */
+// Ads + "Remove ads forever". The iPhone/Android app shows real AdMob ads and sells the real
+// one-time purchase. The web/PWA version shows no ads at all, except the ?adtest preview.
+const UA=navigator.userAgent;
+const NATIVE=window.__TAURI__?(/Android/i.test(UA)?'android':/iPhone|iPad|iPod/i.test(UA)?'ios':''):'';
+const PREVIEW=!NATIVE&&/[?&]adtest\b/.test(location.search);
+const MONEY={price:'$1.99',
+  live:false,       // master switch: false = no ads, no buy button anywhere (family builds until the store release)
+  testAds:true,     // Google's sample ads while building. Flip to false for the App Store/Play release.
+  product:'com.tophercook.wordpopper.noads',
+  units:{ios:'ca-app-pub-7927633717685544/6835354662',android:'ca-app-pub-7927633717685544/7435129620'},
+  testUnits:{ios:'ca-app-pub-3940256099942544/4411468910',android:'ca-app-pub-3940256099942544/1033173712'},
+  every:3,          // an ad after every 3rd finished round…
+  freeRounds:3,     // …but never in someone's first 3 rounds
+  gapMs:180000};    // and never more than one ad in 3 minutes
+const ADS_ON=(MONEY.live&&!!NATIVE)||PREVIEW;
+const call=(cmd,args)=>window.__TAURI__.core.invoke(cmd,args);
+const AD=Object.assign({removed:false,rounds:0,sinceAd:0,lastAd:0},store.get('ads',{}));
+const saveAds=()=>store.set('ads',AD);
+if(PREVIEW){AD.removed=false;AD.rounds=MONEY.freeRounds;AD.sinceAd=MONEY.every;AD.lastAd=0;saveAds()}  // preview: next round shows an ad
+const Ads={
+  roundDone(){if(AD.removed||!ADS_ON)return;AD.rounds++;AD.sinceAd++;saveAds()},
+  due(){return ADS_ON&&!AD.removed&&AD.rounds>=MONEY.freeRounds&&AD.sinceAd>=MONEY.every&&Date.now()-AD.lastAd>=MONEY.gapMs},
+  // the app loads an ad ahead of time so it's ready the moment one is due
+  prepare(){if(!NATIVE||!ADS_ON||AD.removed)return;
+    call('plugin:wpads|prepare',{unitId:(MONEY.testAds?MONEY.testUnits:MONEY.units)[NATIVE]}).catch(()=>{})},
+  // shows an ad if one is due, resolves when it's closed (or straight away if not)
+  async between(){if(!this.due())return;stopAuto();Music.stop();
+    let shown=true;
+    if(NATIVE){try{shown=(await call('plugin:wpads|show')).shown}catch(e){shown=false}}
+    else await this.showPreview();
+    if(shown){AD.sinceAd=0;AD.lastAd=Date.now();saveAds()}  // no ad ready = try again next round
+    Music.start()},
+  showPreview(){return new Promise(res=>{
+    const pick=[['🧁','Bakery down the road — fresh donuts every morning.'],['🛠️','Local handyman — no job too small.'],['🎣','Lures and keychains, made by hand.'],['📚','A new book from a local author.']][Math.floor(Math.random()*4)];
+    $('#brkArt').textContent=pick[0];$('#brkBody').innerHTML=pick[1]+'<br><small>(This is a test ad. Real ads come from Google in the app.)</small>';
+    $('#brkTag').textContent='TEST AD';
+    $('#brkBuy').textContent='🚫 Remove ads forever · '+MONEY.price;
+    const c=$('#brkClose');let n=5;c.disabled=true;c.textContent='Close in '+n;
+    $('#brkScr').classList.add('on');
+    const iv=setInterval(()=>{if(document.hidden)return;n--;if(n>0){c.textContent='Close in '+n}else{clearInterval(iv);c.disabled=false;c.textContent='✕ Close'}},1000);
+    const done=()=>{clearInterval(iv);$('#brkScr').classList.remove('on');res()};
+    c.onclick=()=>{if(!c.disabled)done()};
+    $('#brkBuy').onclick=async()=>{if(await Shop.buy())done()};
+  })}};
+const owned=p=>p&&p.productId===MONEY.product&&p.purchaseState===0;
+const Shop={
+  busy:false,
+  async buy(){
+    if(AD.removed){toast('Ads are already gone for good 🎉');return true}
+    if(NATIVE){if(this.busy)return false;this.busy=true;
+      try{const p=await call('plugin:iap|purchase',{payload:{productId:MONEY.product,productType:'inapp'}});
+        if(owned(p)){if(NATIVE==='android')call('plugin:iap|acknowledge_purchase',{payload:{purchaseToken:p.purchaseToken}}).catch(()=>{});
+          this.unlock();return true}
+        if(p&&p.purchaseState===2)toast('Purchase pending. Ads will go away once it goes through.');
+        return false}
+      catch(e){if(!/cancel/i.test(String(e)))toast('The store didn\'t answer. Please try again in a bit.');return false}
+      finally{this.busy=false}}
+    return new Promise(res=>{   // web preview: pretend purchase, nothing is charged
+      modal(`<div class="h1">🚫 Remove ads forever</div><div class="rank">${MONEY.price}, one time. No ads between rounds, ever, on this device and any you restore it to.</div>
+        <div class="card" style="text-align:center;font-weight:800">🧪 TEST MODE: no money is charged.</div>
+        <button class="btn" id="buyGo">Buy · ${MONEY.price}</button><button class="btn ghost" id="buyNo">Not now</button>`,true);
+      $('#buyGo').onclick=()=>{closeModal();this.unlock();res(true)};
+      $('#buyNo').onclick=()=>{closeModal();res(false)}})},
+  async restore(quiet){
+    if(!NATIVE){if(!quiet)toast(AD.removed?'Purchase restored ✓':'No purchase found on this account');return}
+    try{const r=await call('plugin:iap|restore_purchases',{payload:{productType:'inapp'}});
+      if((r.purchases||[]).some(owned)){if(!AD.removed)this.unlock(quiet);else if(!quiet)toast('Purchase restored ✓')}
+      else if(!quiet)toast('No purchase found on this account')}
+    catch(e){if(!quiet)toast('The store didn\'t answer. Please try again in a bit.')}},
+  // show the store's own price (local currency) instead of the hard-coded one
+  async loadPrice(){if(!NATIVE)return;
+    try{const r=await call('plugin:iap|get_products',{payload:{productIds:[MONEY.product],productType:'inapp'}});
+      const pr=(r.products||[])[0];if(pr&&pr.formattedPrice){MONEY.price=pr.formattedPrice;refreshAdsUI()}}catch(e){}},
+  unlock(quiet){AD.removed=true;saveAds();refreshAdsUI();
+    if(quiet)return;sfx.end&&sfx.end();burst(innerWidth/2,innerHeight/2,40);toast('🎉 Ads are gone for good. Thank you!')},
+  testReset(){AD.removed=false;AD.rounds=MONEY.freeRounds;AD.sinceAd=MONEY.every;AD.lastAd=0;saveAds();refreshAdsUI();Ads.prepare();toast('🧪 Ads are back (test). Finish a round to see one.')}};
+function refreshAdsUI(){
+  const sell=ADS_ON&&!AD.removed;
+  $('#btnNoAds').style.display=sell?'':'none';
+  $('#noAdsSub').textContent=`${MONEY.price} once. No ads between rounds, ever.`;
+  $('#adsRow').style.display=ADS_ON?'':'none';
+  $('#adsState').textContent=AD.removed?'✅ Removed for good':'On (between rounds)';
+  $('#setBuy').style.display=sell?'':'none';$('#setBuy').textContent='🚫 Remove ads forever · '+MONEY.price;
+  $('#setRestore').style.display=NATIVE&&ADS_ON?'':'none';
+  $('#setResetTest').style.display=(PREVIEW||(NATIVE&&MONEY.testAds))&&AD.removed?'':'none'}
+$('#btnNoAds').onclick=()=>Shop.buy();
+$('#setBuy').onclick=()=>Shop.buy();
+$('#setRestore').onclick=()=>Shop.restore();
+$('#setResetTest').onclick=()=>Shop.testReset();
+if(NATIVE&&ADS_ON){Shop.restore(true);Shop.loadPrice();Ads.prepare()}
+
+async function startMode(m,autoPop){
+  if(m!=='daily'||!ST.daily[today()])await Ads.between();
+  return _startMode(m,autoPop)}
+function _startMode(m,autoPop){
   if(m==='daily'){const d=today();if(ST.daily[d]){showDailyDone();return}
     newGame({mode:'daily',size:4,time:90,seed:hash('wordpopper-'+d)})}
   else if(m==='zen')newGame({mode:'zen',size:S.size,time:0});
@@ -995,7 +1165,7 @@ function partyNext(){
 function renderSettings(){$$('.seg').forEach(seg=>{const k=seg.dataset.k;seg.querySelectorAll('button').forEach(b=>{
   b.classList.toggle('on',String(S[k])===b.dataset.v);
   b.onclick=()=>{const v=b.dataset.v;S[k]=isNaN(+v)?v:+v;saveAll();applyLook();renderSettings();if(k==='music'){S.music?Music.start():Music.stop()}}})})}
-$('#btnSettings').onclick=()=>{renderSettings();show('settings')};$('#setBack').onclick=goHome;
+$('#btnSettings').onclick=()=>{renderSettings();refreshAdsUI();show('settings')};$('#setBack').onclick=goHome;
 function listScreen(html){$('#listWrap').innerHTML=html+'<button class="btn" id="lsBack">Back</button>';$('#lsBack').onclick=goHome;show('listScr');$('#listScr').scrollTop=0}
 $('#btnStats').onclick=()=>{
   const bests=Object.entries(ST.best).map(([k,v])=>`<div class="set">${k==='daily'?'Daily':k.replace('_',' · ').replace(/(\d+)$/,s=>fmt(+s))}<b>${v}</b></div>`).join('')||'<div class="rank">Play a round to set a best.</div>';
@@ -1018,6 +1188,7 @@ function renderSkins(){
 $('#levelCard').onclick=renderSkins;
 
 function refreshHome(){
+  refreshAdsUI();
   const lv=levelOf(ST.xp);
   $('#lvlNum').textContent=lv.L;$('#lvlTitle').textContent=`Level ${lv.L} · ${titleFor(lv.L)}`;
   $('#xpFill').style.width=(lv.into/lv.need*100)+'%';
@@ -1044,6 +1215,8 @@ setTimeout(()=>{buildTrie();BG.init();$('#loading').remove();refreshHome();show(
   // browsers only allow audio after a tap
   document.addEventListener('pointerdown',function first(){ac();Music.start();document.removeEventListener('pointerdown',first)},{once:true});
 },30);
+// test hook: only with ?wptest in the URL (automated checks), never for players
+if(/[?&]wptest\b/.test(location.search))window.__wpEval=s=>eval(s);
 })();
 </script>
 </body>
